@@ -10,6 +10,7 @@
     "test": "node --test tests/domain.test.cjs tests/store.test.cjs tests/layout.test.cjs tests/ai.test.cjs",
     "build:mcp": "node mcp/build.cjs",
     "test:mcp": "node tests/mcp.cjs",
+    "demo:record": "node scripts/record-demos.cjs",
     "prepack": "npm run build:mcp",
     "predist": "npm run build:mcp",
     "predist:win": "npm run build:mcp",
@@ -49,6 +50,7 @@
       }
     ],
     "win": {
+      "artifactName": "Pebble-${version}-windows-${arch}.${ext}",
       "target": [
         "nsis",
         "zip"
@@ -61,6 +63,7 @@
       "createDesktopShortcut": true
     },
     "mac": {
+      "artifactName": "Pebble-${version}-macos-${arch}.${ext}",
       "target": [
         "dmg",
         "zip"

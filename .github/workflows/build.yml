@@ -7,16 +7,23 @@ permissions:
   contents: read
 jobs:
   package:
+    name: Build ${{ matrix.platform }} ${{ matrix.arch }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            command: npm run dist:win
-            artifact: Pebble-Windows
-          - os: macos-latest
-            command: npm run dist:mac -- --arm64 --x64
-            artifact: Pebble-macOS
+          - os: windows-2025
+            platform: windows
+            arch: x64
+            command: npm run dist:win -- --x64
+          - os: macos-15
+            platform: macos
+            arch: arm64
+            command: npm run dist:mac -- --arm64
+          - os: macos-15-intel
+            platform: macos
+            arch: x64
+            command: npm run dist:mac -- --x64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -31,9 +38,39 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
+          name: Pebble-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
             release/*.exe
             release/*.zip
             release/*.dmg
           if-no-files-found: error
+          retention-days: 14
+  release:
+    name: Publish downloadable preview
+    needs: package
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Pebble-*
+          path: release-assets
+          merge-multiple: true
+      - run: node scripts/checksums.cjs release-assets
+      - name: Publish installers and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" release-assets/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" release-assets/* \
+              --verify-tag --draft --prerelease \
+              --title "Pebble ${GITHUB_REF_NAME#v} — desktop preview" \
+              --notes-file "docs/releases/$GITHUB_REF_NAME.md"
+          fi
+          gh release edit "$GITHUB_REF_NAME" --draft=false

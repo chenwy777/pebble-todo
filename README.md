@@ -1,148 +1,207 @@
-# Pebble · 悬浮待办
+<p align="center"><img src="assets/icon.svg" width="64" alt="Pebble logo"></p>
 
-Minimal floating tasks for Windows and macOS.
+# Pebble
 
-一个安静的桌面悬浮小球，鼠标停留后展开待办列表。面向 **Windows 与 macOS**，不需要账号，事项保存在自己的电脑上。
+A transparent floating to-do list for **Windows and macOS**, with local **MCP tools for Codex and Claude**.
 
-![Pebble MVP，截图中为演示事项](docs/preview.png)
+[中文说明](README.zh-CN.md) · [Download v0.5.0](https://github.com/chenwy777/pebble-todo/releases/tag/v0.5.0) · [Installation](#installation) · [AI connections](#connect-codex-or-claude) · [Changelog](CHANGELOG.md)
 
-## v0.5.0
+Pebble stays on your desktop as a small glass orb. Hover to unfold the list downward, add a task, and return to what you were doing. Your tasks are stored on your computer; no Pebble account is required.
 
-- 新增本地 MCP 服务，面向 Codex、Claude Code 和 Claude Desktop 的本地接入，提供添加事项、查询事项、读取分类和本机日期时区四个工具。
-- 设置 → AI 连接可开启 / 停止访问，并复制 Codex 或 Claude 配置；详情见 [AI 连接说明](docs/ai.md)。
-- AI 添加成功后列表与小球数字即时刷新。支持中英文、日期、跨午夜时间段、预计时长和重复请求去重。
-- GUI 与 AI 写入统一排队，检测旧快照并保留编辑草稿，避免并发覆盖。
+<p align="center"><img src="docs/demos/quick-start.gif" width="480" alt="Real Pebble recording: hover to unfold, add tasks, highlight a row, move it through Doing and Done, and collapse to the remaining-task counter."></p>
 
-Windows 试用文件在 `release-v0.5/`，直接运行 `release-v0.5/win-unpacked/Pebble.exe`。
+_Actual Electron app interaction using disposable demo data. The neutral backdrop and captions are added for readability._
 
-### v0.4.2
+## What it does
 
-- 自建分类接入离线常用词对照，例如 `life` / 生活、`work` / 工作、`travel` / 旅行；按界面语言显示，不改写原分类名或事项内容。
-- “管理分类”中每个分类可展开填写可选的英文和中文名称，优先使用用户填写的名称；清空后恢复常用词或原名。未收录的名称保留原文。
-- 分类中英文名称随本地数据保存，备份导入导出与重启保留。
+| Feature                | Behavior                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Floating glass orb     | Drag to move; hover or click to open. The list unfolds downward.                                             |
+| Remaining-task counter | Shows the P logo when To-do is empty, otherwise the full To-do count. Doing and Done are excluded.           |
+| Three task states      | Add tasks directly to To-do, Doing or Done. Click a task's checkbox to advance its state.                    |
+| Hover focus            | The hovered row lifts slightly while other rows fade and shrink. Reduced-motion preferences are respected.   |
+| Custom categories      | Add, rename, recolor and filter categories; category groups can be collapsed.                                |
+| Planned time           | Optional date, duration, or start/end time. Pebble calculates hours and minutes and labels overnight ranges. |
+| Quick templates        | Reuse built-in activities or create your own templates, then choose the destination state.                   |
+| English / Chinese      | English by default; switch the interface with 中文 / EN. Click the date to switch its language separately.   |
+| Local data             | Automatic local saves, previous-write backup, JSON import/export and undo for recent manual changes.         |
+| Optional AI tools      | Read tasks/categories and add tasks through a local MCP connection.                                          |
 
-Windows 试用文件在 `release-v0.4.2/`，直接运行 `release-v0.4.2/win-unpacked/Pebble.exe`。
+## Installation
 
-### v0.4.1
+### Choose your download
 
-- 悬浮球改为清透玻璃效果：中心几乎透明，只保留轻微反光和纤细边缘；减轻阴影，悬停也不增加底色厚度。
-- Logo 与待办数字保持独立清晰度。
+Open the [v0.5.0 release](https://github.com/chenwy777/pebble-todo/releases/tag/v0.5.0) and expand **Assets** if needed. Download the installer matching your computer; the GitHub **Source code** archives are for developers.
 
-Windows 试用文件在 `release-v0.4.1/`，直接运行 `release-v0.4.1/win-unpacked/Pebble.exe`。
+| Your computer                   | Recommended download                                                                                                | ZIP alternative                                                                                                     |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Windows x64                     | [Windows installer](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-windows-x64.exe) | [Windows ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-windows-x64.zip)       |
+| Mac with an Apple M-series chip | [Apple Silicon DMG](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-arm64.dmg) | [Apple Silicon ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-arm64.zip) |
+| Mac with an Intel processor     | [Intel DMG](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-x64.dmg)           | [Intel ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-x64.zip)           |
 
-### v0.4.0
+**Node.js is not required to use the desktop app.** It is needed only for optional AI connections or development.
 
-- 小球改为浅色半透明渐变，细边框、轻阴影与简洁的 Pebble P 标记。
-- To-do 为 0 时显示 Logo；有待办时，球中央显示完整 To-do 数量。Doing 和 Done 不计入数字，不再使用角落徽标。
-- 小球位于面板上方，面板向下展开、向上收回；快速反向操作会接续当前动画。
-- 贴近左边缘时面板向右延伸；贴近底部时自动上移，给向下展开留出空间。收起后球停在展开时的位置。
-- 默认初始位置改为屏幕右上方；保留已有位置，并在必要时调整到可完整显示面板的位置。
-- 窗口位置写入与任务写入串行处理，避免移动窗口时覆盖正在保存的任务。
+### Windows
 
-Windows 试用文件在 `release-v0.4/`，直接运行 `release-v0.4/win-unpacked/Pebble.exe`；安装包为 `Pebble Setup 0.4.0.exe`。
+1. If an older Pebble is running, right-click its orb and choose **Quit Pebble**.
+2. Download and run `Pebble-0.5.0-windows-x64.exe` from this repository's release.
+3. Choose the installation folder and finish the installer.
+4. Open **Pebble** from the Start menu or desktop shortcut. Look for the floating orb; Pebble does not use a normal taskbar window.
 
-### v0.3.0
+For the ZIP version, choose **Extract All**, keep the entire extracted folder together, and run `Pebble.exe` inside it. Copying only the `.exe` will leave behind required resources. Windows 11 x64 is the local validation environment; other Windows configurations are not yet individually verified.
 
-- 按用户提供的界面参考改为半透明便签布局：顶部小日期、等宽字体、按分类分组，移除逐项分隔线和主界面进度统计。
-- 悬停事项时轻微放大和浮起，其他事项缩小并淡出；移开后恢复。支持减少动态效果的系统偏好。
-- 分类标题可以折叠和展开。
-- 移除默认“求职”分类与未修改的求职快捷模板。旧事项保留并移至未分类；自定义名称、模板和分类不被覆盖。
-- 默认面板不透明度为 82%，旧版默认 94% 会更新；用户已经设置的其他透明度会保留。
+These preview installers do not have a publisher certificate, so Windows may show an unrecognized-publisher warning. Verify the repository and file before deciding whether to run it. Asset hashes are published in `SHA256SUMS.txt`; PowerShell can calculate one with `Get-FileHash -Algorithm SHA256 .\Pebble-0.5.0-windows-x64.exe`.
 
-Windows 试用文件在 `release-v0.3/`，直接运行 `release-v0.3/win-unpacked/Pebble.exe`；安装包为 `Pebble Setup 0.3.0.exe`。
+### macOS
 
-### v0.2.0
+1. Open **Apple menu → About This Mac**. A **Chip** entry such as Apple M1/M2/M3/M4 means **arm64**; an **Intel Processor** entry means **x64**.
+2. Download the matching `.dmg`, open it, and drag **Pebble** to **Applications**.
+3. If replacing a previous version, quit the old Pebble first. Open the new app from Applications and look for the orb or menu-bar icon.
+4. If using the ZIP instead, extract it and move `Pebble.app` to Applications before opening it.
 
-- 黑白灰简约界面：列表分隔线、统一系统字体、圆形悬浮球；移除宣传语、渐变、装饰图形和独立任务卡片。
-- 默认英文，点击右上角 `中文` 或在 Settings → Language 中切换完整中文界面。选择会保存，默认分类、模板、时间单位、操作提示及原生右键菜单跟随界面语言；用户输入的事项和自定义名称保持原样。
-- 主界面 `Manage categories` 可管理分类；新增事项、编辑事项和创建模板的分类下拉框都支持 `+ New category…`。分类名称与颜色可直接编辑，离开字段后自动保存。
-- 旧版任务数据兼容。未改名的默认分类和模板会迁移为可翻译的预设；用户改过的名称保留。
-- 展开和收起时显式恢复置顶，修复此前置顶状态检查失败。
+The preview is not signed with an Apple Developer ID or notarized. If macOS blocks opening it, review [Apple's guidance](https://support.apple.com/en-au/102445). For a trusted download, Apple's per-app flow is **System Settings → Privacy & Security → Open Anyway** after the first attempt to open it. This does not require turning Gatekeeper off globally. To check a download, run `shasum -a 256 /path/to/download.dmg` and compare it with `SHA256SUMS.txt`.
 
-此前试用目录暂时保留。
+Mac installers are produced by separate Apple Silicon and Intel CI jobs. Packaging and unit tests do not replace manual checks of transparency, dragging, multiple displays, menu-bar behavior or system shortcuts on a real Mac; that acceptance work is still pending.
 
-### MVP 功能
+### Update or uninstall
 
-- 悬浮置顶、拖动移动、接近屏幕边缘时吸附；鼠标停留 300 毫秒展开，移开后延迟收起。
-- To-do / Doing / Done 三个状态，每个状态都能添加事项。
-- 单击左侧方框：待办 → 进行中 → 完成 → 待办；单击事项正文编辑或直接改到任意状态。
-- 自定义分类、分类颜色与分类筛选。删除分类时保留事项和模板。
-- 可选任务日期、预计时长，或开始 / 结束时间；自动计算小时和分钟，并标明跨午夜的“次日”。
-- 填写开始时间和时长，推算结束时间。同一开始 / 结束时间会提示无效，跨天时间段最多小于 24 小时；更长的计划可以使用预计时长。
-- 运动、学习等快捷模板；使用时选择目标状态、日期和时间，也可以创建自己的模板。
-- 默认英文界面和日期，右上角切换完整中文；点击日期可单独切换日期语言。常见自建分类名自动切换中英文，其他分类可设置双语名称。文字颜色和面板不透明度可以调整。
-- 本地持久保存、上一次写入的自动备份、JSON 导入导出、最近一次修改可撤销。
-- 托盘 / 菜单栏入口，以及 `Ctrl + Shift + Space`（Windows）/ `⌘ + Shift + Space`（macOS）快速唤出。
+Export a JSON backup in **Settings → Export backup** before upgrading. Quit the old version, then install or open the new one. Data is stored separately from the application and should load automatically. If you move or reinstall Pebble, copy its AI configuration again so the MCP path points to the new location.
 
-不包含：云端同步、提醒通知、自动重复事项、实际用时计时器、开机启动。设置的时长是计划信息，不会自动把事项标记完成。
+Uninstall the Windows application normally, or remove `Pebble.app` on macOS. ZIP users can remove the extracted application folder after quitting. Removing the app does not require deleting your separate task-data folder.
 
-## 启动开发版
+## First use
 
-需要 Node.js 24 LTS 和 npm。
+1. **Open:** hover over the orb, click it, or use the shortcut below.
+2. **Add:** choose To-do / Doing / Done, enter a task in the bottom field, choose a category and press **Enter**.
+3. **Schedule:** use **Date / time** for a date, a duration, or a start/end range. Existing tasks can be edited by clicking their title.
+4. **Advance:** click the checkbox next to a task: **To-do → Doing → Done → To-do**. The editor can move it directly to any state.
+5. **Keep open:** click the pin. Use the minus button to collapse.
+6. **Move or quit:** drag the orb to move it; right-click it or the tray/menu-bar icon to quit.
+
+| Action                          | Windows                | macOS               |
+| ------------------------------- | ---------------------- | ------------------- |
+| Open and focus task entry       | `Ctrl + Shift + Space` | `⌘ + Shift + Space` |
+| Collapse when no dialog is open | `Esc`                  | `Esc`               |
+
+Tasks are shown across all dates, grouped by category. A planned date or duration does **not** schedule a notification or automatically complete a task.
+
+### Categories and language
+
+Use **Manage categories** or **+ New category…** in a category selector. Changes save when you leave a field. Deleting a category keeps its tasks and templates as Uncategorized.
+
+Common category names have a local English/Chinese lookup (`life` → 生活, `work` → 工作). For any other name, expand **Translations (optional)** and enter English and Chinese labels. Your labels take priority; an unknown name without a translation stays as entered. Task text and custom template titles remain unchanged when you switch the interface language.
+
+<p align="center"><img src="docs/demos/categories-language.gif" width="480" alt="Real recording: create a custom category, give it a Chinese name, add a task, and switch the interface and date languages."></p>
+
+### Time ranges and AI additions
+
+A range such as **19:00 → 20:30** displays **1h 30m**. A range ending earlier than it starts crosses midnight; equal start and end times are invalid. Use Duration for a plan longer than a day.
+
+The second half of this recording performs a real `pebble_add_task` MCP call against the running demo instance. It demonstrates the integration and automatic refresh, rather than a simulated chat in a particular AI client.
+
+<p align="center"><img src="docs/demos/time-and-ai.gif" width="480" alt="Real recording: set a 19:00–20:30 range, save the task, add a second task through MCP, and watch the orb and list update."></p>
+
+## Connect Codex or Claude
+
+Pebble exposes an MCP server that a compatible AI client can start locally. The AI client interprets your request; Pebble validates and saves the task. Pebble itself does not need a model API key.
+
+1. Install **Node.js 20+**; Node.js 24 is the development version used here.
+2. Keep Pebble running and open **Settings → AI connections**.
+3. Enable **Allow AI apps to read and add tasks**.
+4. Copy the appropriate configuration and merge it into the client's settings. Preserve your existing MCP servers.
+5. Restart the AI client so it loads the new tools.
+
+| Client         | Where to put the generated configuration                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Codex          | Add the copied TOML section to `~/.codex/config.toml`. Update an existing `[mcp_servers.pebble]` section rather than duplicating it. |
+| Claude Code    | Merge `mcpServers.pebble` from the copied JSON into the project's `.mcp.json`, or register it using `claude mcp add`.                |
+| Claude Desktop | Open Settings → Developer → Edit Config and merge the copied JSON into `claude_desktop_config.json`.                                 |
+
+Claude Desktop's configuration is normally at `%APPDATA%/Claude/claude_desktop_config.json` on Windows or `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS. If the client cannot find `node`, set `command` to Node's absolute executable path. Local stdio connections run on the desktop; a web chat cannot directly start a process on your computer.
+
+Try: **“Add reviewing my CV tonight from 7 to 8 to my Study to-dos.”** Or: **“Show my remaining to-dos.”**
+
+| Tool                     | Purpose                                                           |
+| ------------------------ | ----------------------------------------------------------------- |
+| `pebble_get_context`     | Read the local date, timezone, language and task counts.          |
+| `pebble_list_categories` | Read category IDs and English/Chinese names.                      |
+| `pebble_list_tasks`      | Search by status, category, date or title, with pagination.       |
+| `pebble_add_task`        | Add a task with optional status, category, date and planned time. |
+
+The local bridge is off by default. When enabled, it uses an authenticated loopback connection; turning access off or quitting Pebble stops access. The current MCP tools do not edit or delete existing tasks. Protocol tests cover SDK v2 and three older protocol versions; Claude client UI acceptance and other clients such as Gemini / WorkBuddy remain to be verified. DeepSeek support depends on the client using the model.
+
+References: [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli), [Claude Code MCP](https://code.claude.com/docs/en/mcp), [local Claude Desktop setup](https://modelcontextprotocol.io/docs/develop/connect-local-servers). More implementation and configuration detail is in the [Chinese AI connection guide](docs/ai.md).
+
+## Data and backups
+
+| System  | Task file                                         |
+| ------- | ------------------------------------------------- |
+| Windows | `%APPDATA%/Pebble/tasks.json`                     |
+| macOS   | `~/Library/Application Support/Pebble/tasks.json` |
+
+The previous valid write is retained as `tasks.json.backup`. If the main file is damaged, Pebble attempts to restore that backup and keeps the damaged original. Use **Settings → Export backup** for a separate copy; importing a backup replaces the current list after confirmation.
+
+The app does not send telemetry or load external page resources. Task data is not encrypted; it uses your OS account's file permissions. When AI access is enabled, its temporary discovery file is under the data folder's `ai/connection.json`; do not share that file. Configuration copied for an AI client does not contain the connection token.
+
+## Troubleshooting
+
+| Problem                                | What to check                                                                                                                            |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| No normal app window or taskbar icon   | Pebble is an orb/tray application. Check the desktop orb or use the open shortcut.                                                       |
+| The old UI is still shown              | Quit the older process before opening a new build; Pebble normally runs as one instance.                                                 |
+| ZIP build will not start               | Extract the entire ZIP and keep all resources beside the executable.                                                                     |
+| Mac download will not open             | Confirm the processor architecture and review the macOS installation notes above.                                                        |
+| A custom category stays in English     | Expand its translation fields, or leave an unrecognized name unchanged intentionally. Only known category words translate automatically. |
+| MCP reports that Pebble is unavailable | Run Pebble, enable AI access, verify the generated path and Node executable, then restart the AI client.                                 |
+| Shortcut does not open Pebble          | Another application may own that shortcut. Use the orb or tray/menu-bar icon.                                                            |
+
+For a bug report, include the Pebble version, operating system, processor type, steps to reproduce and a screenshot without personal task content. [Open an issue](https://github.com/chenwy777/pebble-todo/issues).
+
+## Development and validation
+
+Use Node.js 24 and npm:
 
 ```sh
+git clone https://github.com/chenwy777/pebble-todo.git
+cd pebble-todo
 npm ci
 npm start
 ```
 
-Windows 可以双击 `Start Pebble.cmd`。依赖首次安装需要联网；完成安装后应用本身可以离线使用。
-
-## 使用
-
-1. 鼠标停留在小球上展开，也可以直接单击。
-2. 选择一个状态，在底部输入事项，按 Enter 添加。分类在输入框下面选择。
-3. 要设置时间，点击“日期 / 时长”。也可以先快速记下，随后点击事项编辑。
-4. 点击右上角图钉保持展开；点击减号收起。输入和弹窗操作期间不会因鼠标移开而突然收起。
-5. 拖动小球移动。右键小球，或右键托盘 / 菜单栏图标，可退出程序。
-
-列表按分类分组，保留所有日期的事项；点击分类标题可以折叠。主界面不再显示进度统计。
-
-中文预览：
-
-![中文界面，截图中为演示事项](docs/preview-zh.png)
-
-## 本地数据
-
-- Windows：`%APPDATA%/Pebble/tasks.json`
-- macOS：`~/Library/Application Support/Pebble/tasks.json`
-- 自动备份：同目录 `tasks.json.backup`，保存上一次写入的有效数据。
-- 检测到主文件损坏且有有效备份时，从备份恢复并保留损坏原文件；没有有效备份时会明确报错，不覆盖原文件。
-- 导入会替换当前数据，操作前会要求确认。重要数据请定期使用“导出备份”另存。
-- 应用不发送遥测、不请求外部资源。只有开启 AI 连接后，才会启动经过令牌鉴权的本机回环接口。数据没有加密，使用电脑账户本身的访问权限保护。
-
-## 测试与打包
+Windows developers can also use `Start Pebble.cmd` after dependencies are installed.
 
 ```sh
-npm test               # 时间计算、数据校验、持久化与备份恢复
-npm run test:desktop   # 实际 Electron 窗口的交互回归测试
-npm run build:mcp      # 构建供 AI 客户端调用的独立本地桥接文件
-npm run test:mcp       # 隔离数据目录中的 MCP 与界面联动测试
-npm run pack           # 当前系统的可运行目录
-npm run dist:win       # 在 Windows 上生成安装程序与 zip
-npm run dist:mac       # 在 macOS 上生成 dmg 与 zip
+npm test               # Data, time, storage, layout and local AI bridge checks
+npm run build:mcp      # Bundle the independent Node MCP bridge
+npm run test:desktop   # Electron interaction regression
+npm run test:mcp       # MCP ↔ running Electron integration
+npm run pack           # Unpacked app for the current OS
+npm run dist:win       # Windows installer + ZIP, on Windows
+npm run dist:mac       # DMG + ZIP, on macOS
 ```
 
-安装文件生成到 `release/`。桌面测试使用系统临时目录，不写入真实用户事项；截图保存在 `test-results/`。
+Builds go into `release/`. Desktop/MCP tests use temporary data folders, not your real tasks. The release workflow builds Windows x64, macOS arm64 and macOS x64 separately, runs unit tests, then attaches installers and SHA-256 checksums to a version-tagged GitHub preview release. Local Windows desktop/MCP regression is complete; packaging success is kept separate from pending manual Mac and Claude client acceptance. See [validation details](VALIDATION.md).
 
-`.github/workflows/build.yml` 提供 Windows 与 macOS 的手动构建，以及 `v*` 标签构建。macOS 构建包含 Apple Silicon 和 Intel。工作流只生成可下载产物，不自动发布 Release，也不推送代码。当前默认不签名；对外分发前应配置 Windows 代码签名与 Apple 签名 / 公证。
+To reproduce the README recordings:
 
-**平台验证范围**：Windows 可在本机进行运行验证。macOS 已配置同一套实现与打包流程，但需要在 Mac 上构建并验收透明窗口、屏幕缩放、多显示器、菜单栏与快捷键；配置文件本身不代表已验证通过。
+```sh
+npm run build:mcp
+npm run demo:record
+python -m pip install Pillow
+python scripts/encode-demos.py
+```
 
-## AI 接入
-
-任务数据结构与校验集中在 `src/domain.js`，磁盘存储在 `electron/store.cjs`，GUI 与 AI 共用 `electron/task-service.cjs`。本地桥接在 `electron/ai-bridge.cjs`，MCP stdio 入口在 `mcp/entry.cjs`。
-
-自然语言解析由 AI 应用承担。首版提供读取与新增，暂不通过 MCP 修改或删除已有事项。复制配置、客户端说明和验证范围见 [AI 连接说明](docs/ai.md)。
-
-## 项目结构
+The recorder drives the real Electron app and a real local MCP client using isolated sample tasks. PNG frames are temporary in `test-results/demo-frames`; the encoder adds only captions, a neutral backdrop and timing to the GIFs in `docs/demos`.
 
 ```text
-electron/      原生窗口、托盘、受限的桌面桥接、本地存储
-src/           页面、样式、交互与共享数据校验
-assets/        应用图标与托盘图标
-tests/         数据测试与真实桌面交互测试
-mcp/           MCP stdio 服务、独立打包与客户端配置生成
-.github/       双平台打包工作流
+electron/   Native window, storage, shared task service and private local bridge
+src/        Interface, styling, translations and shared data validation
+mcp/        Stdio MCP server, bundle and configuration generation
+tests/      Unit, desktop and MCP integration checks
+scripts/    Real interaction recording, GIF encoding and asset checksums
+docs/       Demos, AI setup, validation/design context and release notes
 ```
 
-本项目当前先在本地开发；GitHub 账号、仓库名和可见性确认后再上传。
+## Current scope
+
+Pebble 0.5 is a desktop preview. It does not yet include cloud sync, reminder notifications, recurring tasks, automatic startup, actual time tracking or MCP editing/deletion. These limits are also listed in the release notes; planned duration is not a timer or an alarm.
