@@ -1,13 +1,13 @@
 {
   "name": "pebble-todo",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A quiet floating to-do companion for Windows and macOS.",
   "author": "Pebble contributors",
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {
     "start": "electron .",
-    "test": "node --test tests/domain.test.cjs tests/store.test.cjs",
+    "test": "node --test tests/domain.test.cjs tests/store.test.cjs tests/layout.test.cjs",
     "test:desktop": "node tests/desktop.cjs",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",

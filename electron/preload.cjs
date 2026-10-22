@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("desktop", {
   load: () => ipcRenderer.invoke("data:load"),
+  windowState: () => ipcRenderer.invoke("window:get-state"),
   save: (state) => ipcRenderer.invoke("data:save", state),
   exportData: () => ipcRenderer.invoke("data:export"),
   importData: () => ipcRenderer.invoke("data:import"),

@@ -15,6 +15,13 @@
   </head>
   <body>
     <div id="widget">
+      <div id="orb-row">
+        <button id="orb" aria-label="Open Pebble">
+          <svg id="orb-logo" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 19V9a4 4 0 0 1 4-4h1a4.5 4.5 0 0 1 0 9h-2" /></svg
+          ><span id="orb-count" hidden></span>
+        </button>
+      </div>
       <main id="panel" aria-label="Pebble" hidden>
         <header class="header">
           <button id="date-toggle" data-title="Click to change date language">
@@ -121,13 +128,6 @@
           ><span>Ctrl / ⌘ + Shift + Space</span>
         </div>
       </main>
-      <div id="orb-row">
-        <button id="orb" aria-label="Open Pebble">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m6 7 2 2 4-4M13 8h5M6 15h12M6 19h8" /></svg
-          ><span id="orb-count" hidden></span>
-        </button>
-      </div>
     </div>
     <dialog id="task-dialog">
       <form id="task-form" class="dialog-form" autocomplete="off">
@@ -336,7 +336,7 @@
         >
           Drag the orb to move. Right-click it to quit.
         </p>
-        <div class="about">Pebble <small>0.3.0</small></div>
+        <div class="about">Pebble <small>0.4.0</small></div>
       </div>
     </dialog>
     <dialog id="category-dialog">

@@ -1,5 +1,13 @@
 # v0.2 visual direction
 
+## v0.4 orb and opening direction
+
+The orb now uses a translucent neutral gradient, a thin highlight border and a low-contrast monoline P logo. With zero To-do items the logo is visible; otherwise the actual To-do count occupies the center. Doing and Done are excluded. There is no corner badge or numeric cap.
+
+The orb sits above the note. A top-origin clip and short translation reveal the panel downward in 260 ms. Retraction takes 180 ms, with the native window shrinking after 220 ms; reopening cancels that pending shrink and reverses the visual transition. System reduced-motion preferences disable the visual animation.
+
+The orb remains anchored during normal expansion and collapse. At the left edge, the note grows to the right; near the bottom, the orb first moves upward far enough to fit the note. Native position changes are serialized with task saves.
+
 ## v0.3 reference update
 
 The user's two supplied screenshots replace the earlier dashboard-like hierarchy with a translucent desktop note: a small centered date, monospaced text, category headings, simple checkboxes and a plain bottom entry field. No reference photographs, text content or third-party assets were copied into the application.

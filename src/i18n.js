@@ -3,6 +3,7 @@
   else root.PebbleI18n = factory();
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   const zh = {
+    "{n} to-dos. Open Pebble": "{n} 项待办，打开 Pebble",
     "To-do": "待办",
     Doing: "进行中",
     Done: "已完成",

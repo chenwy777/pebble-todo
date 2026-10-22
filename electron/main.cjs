@@ -14,6 +14,12 @@ const path = require("node:path");
 const { Store } = require("./store.cjs");
 const { validateState } = require("../src/domain.js");
 const I = require("../src/i18n.js");
+const {
+  COMPACT,
+  COLLAPSE_MS,
+  placeExpanded,
+  bubbleAnchor,
+} = require("./layout.cjs");
 const t = (key, values) => I.t(state?.settings.language || "en", key, values);
 
 const testMode = process.argv.includes("--smoke-test");
@@ -27,12 +33,16 @@ let win,
   expanded = false,
   drag = null,
   dragTimer,
-  quitting = false;
+  quitting = false,
+  collapsing = false,
+  collapseTimer,
+  orbSide = "right",
+  stateQueue = Promise.resolve();
 let anchor,
   width = 448,
   height = 714,
   pinned = false;
-const compact = 80;
+const compact = COMPACT;
 const clamp = (v, min, max) => Math.min(Math.max(v, min), Math.max(min, max));
 function constrain(pos) {
   const area = screen.getDisplayNearestPoint({
@@ -44,42 +54,75 @@ function constrain(pos) {
     y: Math.round(clamp(pos.y, area.y, area.y + area.height - compact)),
   };
 }
-function notify() {
-  win.webContents.send("window:state", { expanded, pinned });
+function notify(extra = {}) {
+  win.webContents.send("window:state", {
+    expanded,
+    collapsing,
+    pinned,
+    orbSide,
+    ...extra,
+  });
+}
+function updateState(change) {
+  const operation = stateQueue.then(async () => {
+    const saved = await store.save(change(state));
+    state = saved;
+    return saved;
+  });
+  stateQueue = operation.catch(() => {});
+  return operation;
+}
+function persistAnchor() {
+  const position = { ...anchor };
+  updateState((current) => ({
+    ...current,
+    settings: { ...current.settings, position },
+  })).catch((error) =>
+    dialog.showErrorBox(
+      t("Unable to save position"),
+      I.error(state.settings.language, error.message),
+    ),
+  );
 }
 function open() {
   if (!win || win.isDestroyed() || drag) return;
-  if (!expanded) {
-    anchor = { x: win.getBounds().x, y: win.getBounds().y };
-    const area = screen.getDisplayMatching(win.getBounds()).workArea;
-    width = Math.min(448, area.width);
-    height = Math.min(714, area.height);
-    expanded = true;
-    win.setBounds({
-      x: Math.round(
-        clamp(anchor.x + compact - width, area.x, area.x + area.width - width),
-      ),
-      y: Math.round(
-        clamp(
-          anchor.y + compact - height,
-          area.y,
-          area.y + area.height - height,
-        ),
-      ),
-      width,
-      height,
-    });
+  const hadRoom = expanded || collapsing;
+  clearTimeout(collapseTimer);
+  collapsing = false;
+  if (!hadRoom) {
+    const current = win.getBounds();
+    const area = screen.getDisplayMatching(current).workArea;
+    const placement = placeExpanded({ x: current.x, y: current.y }, area);
+    anchor = placement.anchor;
+    orbSide = placement.side;
+    width = placement.bounds.width;
+    height = placement.bounds.height;
+    win.setBounds(placement.bounds);
+    persistAnchor();
   }
+  expanded = true;
   win.showInactive();
   win.setAlwaysOnTop(true, "floating");
   notify();
 }
-function close(force = false) {
-  if (!win || (!force && pinned) || drag || !expanded) return;
+function finishCollapse() {
+  clearTimeout(collapseTimer);
   expanded = false;
-  win.setBounds({ ...constrain(anchor), width: compact, height: compact });
+  collapsing = false;
+  if (!win || win.isDestroyed()) return;
+  anchor = constrain(anchor);
+  win.setBounds({ ...anchor, width: compact, height: compact });
   win.setAlwaysOnTop(true, "floating");
   notify();
+}
+function close(force = false, instant = false) {
+  if (!win || (!force && pinned) || drag || (!expanded && !collapsing)) return;
+  if (instant) return finishCollapse();
+  if (collapsing) return;
+  expanded = false;
+  collapsing = true;
+  notify();
+  collapseTimer = setTimeout(finishCollapse, COLLAPSE_MS);
 }
 function menu() {
   Menu.buildFromTemplate([
@@ -102,16 +145,20 @@ function menu() {
   ]).popup({ window: win });
 }
 async function saveState(next) {
-  // Window placement belongs to the native process, never an outdated renderer copy.
-  const checked = validateState({
-    ...next,
-    settings: { ...next.settings, position: state.settings.position },
-  });
-  const saved = await store.save(checked);
-  state = saved;
-  return saved;
+  return updateState((current) =>
+    validateState({
+      ...next,
+      settings: { ...next.settings, position: current.settings.position },
+    }),
+  );
 }
 function registerIPC() {
+  ipcMain.handle("window:get-state", () => ({
+    expanded,
+    collapsing,
+    pinned,
+    orbSide,
+  }));
   ipcMain.handle("data:load", () => ({
     state,
     notice: store.recoveryNotice || "",
@@ -124,6 +171,7 @@ function registerIPC() {
       filters: [{ name: "JSON", extensions: ["json"] }],
     });
     if (result.canceled) return false;
+    await stateQueue;
     await store.queue;
     await fs.writeFile(result.filePath, JSON.stringify(state, null, 2), "utf8");
     return true;
@@ -168,6 +216,7 @@ function registerIPC() {
   ipcMain.on("app:quit", () => app.quit());
   ipcMain.on("window:drag", (_, phase) => {
     if (phase === "start" && !drag) {
+      if (collapsing) open();
       drag = { cursor: screen.getCursorScreenPoint(), bounds: win.getBounds() };
       dragTimer = setInterval(() => {
         const cursor = screen.getCursorScreenPoint();
@@ -180,25 +229,24 @@ function registerIPC() {
       clearInterval(dragTimer);
       drag = null;
       const bounds = win.getBounds();
-      const pos = constrain({
-        x: bounds.x + bounds.width - compact,
-        y: bounds.y + bounds.height - compact,
-      });
+      const pos = constrain(bubbleAnchor(bounds, orbSide));
       const area = screen.getDisplayNearestPoint(pos).workArea;
       if (pos.x - area.x < 70) pos.x = area.x + 4;
       else if (area.x + area.width - compact - pos.x < 70)
         pos.x = area.x + area.width - compact - 4;
-      anchor = pos;
-      if (!expanded) win.setPosition(pos.x, pos.y);
-      state.settings.position = pos;
-      store
-        .save(state)
-        .catch((error) =>
-          dialog.showErrorBox(
-            t("Unable to save position"),
-            I.error(state.settings.language, error.message),
-          ),
-        );
+      if (expanded) {
+        const placement = placeExpanded(pos, area);
+        anchor = placement.anchor;
+        orbSide = placement.side;
+        width = placement.bounds.width;
+        height = placement.bounds.height;
+        win.setBounds(placement.bounds);
+        notify();
+      } else {
+        anchor = pos;
+        win.setPosition(pos.x, pos.y);
+      }
+      persistAnchor();
     }
   });
 }
@@ -210,7 +258,7 @@ async function createWindow() {
   anchor = constrain(
     state.settings.position || {
       x: area.x + area.width - 104,
-      y: area.y + area.height - 120,
+      y: area.y + 36,
     },
   );
   win = new BrowserWindow({
@@ -267,14 +315,10 @@ async function createWindow() {
   globalShortcut.register("CommandOrControl+Shift+Space", () => {
     open();
     win.focus();
-    win.webContents.send("window:state", {
-      expanded,
-      pinned,
-      focusInput: true,
-    });
+    notify({ focusInput: true });
   });
   screen.on("display-metrics-changed", () => {
-    close(true);
+    close(true, true);
     anchor = constrain(anchor);
     win.setBounds({ ...anchor, width: compact, height: compact });
   });
@@ -302,8 +346,9 @@ app.on("before-quit", (event) => {
     event.preventDefault();
     quitting = true;
     clearInterval(dragTimer);
+    clearTimeout(collapseTimer);
     globalShortcut.unregisterAll();
-    store.queue.finally(() => app.quit());
+    stateQueue.then(() => store.queue).finally(() => app.quit());
   }
 });
 app.on("window-all-closed", () => app.quit());

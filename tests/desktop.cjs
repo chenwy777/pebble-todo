@@ -46,6 +46,27 @@ async function main() {
   }
   try {
     let page = await launch();
+    await expect(page.locator("#orb-logo")).toBeVisible();
+    await expect(page.locator("#orb-count")).toBeHidden();
+    const emptyOrb = await page.locator("#orb").boundingBox();
+    const belowPanel = await page.locator("#panel").boundingBox();
+    assert.ok(
+      emptyOrb.y + emptyOrb.height < belowPanel.y,
+      "orb is above the panel",
+    );
+    await page.locator("#pin").focus();
+    await page.mouse.move(8, 8);
+    await page.screenshot({
+      path: path.join(results, "orb-logo.png"),
+      omitBackground: true,
+      scale: "css",
+      clip: {
+        x: emptyOrb.x - 8,
+        y: emptyOrb.y - 8,
+        width: emptyOrb.width + 16,
+        height: emptyOrb.height + 16,
+      },
+    });
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     assert.deepEqual(await nativeMenuLabels(), [
       "Collapse",
@@ -91,10 +112,14 @@ async function main() {
     await expect(page.locator(".task-title")).toHaveText(
       "整理资料 / Review notes",
     );
+    await expect(page.locator("#orb-count")).toHaveText("1");
+    await expect(page.locator("#orb-logo")).toBeHidden();
     await expect(page.locator(".task-schedule")).toContainText(
       "next day 01:00",
     );
     await page.locator(".status-button").click();
+    await expect(page.locator("#orb-logo")).toBeVisible();
+    await expect(page.locator("#orb-count")).toBeHidden();
     await page.locator('[data-tab="doing"]').click();
     await expect(page.locator(".task-title")).toHaveCount(1);
     await page.locator(".status-button").click();
@@ -194,6 +219,8 @@ async function main() {
     await page.locator("#pin").click();
     await expect(page.locator("#pin")).toHaveAttribute("aria-pressed", "true");
     await page.locator("#dismiss-toast").click();
+    await expect(page.locator("#orb-count")).toHaveText("3");
+    await expect(page.locator("#orb-logo")).toBeHidden();
     const group = page.locator('[data-group="study"]');
     await group.locator('[data-action="toggle-group"]').click();
     await expect(group.locator(".task-group-items")).toBeHidden();
@@ -316,12 +343,34 @@ async function main() {
     );
     assert.ok(Math.abs(bounds.width - 80) <= 1);
     assert.ok(Math.abs(bounds.height - 80) <= 1);
+    await expect(page.locator("#orb-count")).toHaveText("3");
+    await expect(page.locator("#orb-logo")).toBeHidden();
     await page.screenshot({
       path: path.join(results, "desktop-orb.png"),
       omitBackground: true,
       scale: "css",
     });
     await page.locator("#orb").hover();
+    await expect(page.locator("#panel")).toBeVisible();
+    const reopenedOrb = await page.locator("#orb").boundingBox();
+    const reopenedPanel = await page.locator("#panel").boundingBox();
+    assert.ok(reopenedOrb.y + reopenedOrb.height < reopenedPanel.y);
+    // Reopening during the retract animation keeps the same anchor and native bounds.
+    const beforeReverse = await app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()[0].getBounds(),
+    );
+    await page.evaluate(() => {
+      window.desktop.collapse();
+      setTimeout(() => window.desktop.expand(), 70);
+    });
+    await expect
+      .poll(() => page.evaluate(() => window.desktop.windowState()))
+      .toMatchObject({ expanded: true, collapsing: false });
+    await page.waitForTimeout(300);
+    const afterReverse = await app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()[0].getBounds(),
+    );
+    assert.deepEqual(afterReverse, beforeReverse);
     await expect(page.locator("#panel")).toBeVisible();
     // Exercise real file import/export while replacing only the native file pickers.
     const D = require("../src/domain.js");

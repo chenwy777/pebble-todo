@@ -187,8 +187,16 @@ function render() {
   D.statuses.forEach(
     (status) => ($("count-" + status).textContent = counts[status]),
   );
-  $("orb-count").textContent = Math.min(counts.todo + counts.doing, 99);
-  $("orb-count").hidden = counts.todo + counts.doing === 0;
+  $("orb-count").textContent = counts.todo;
+  $("orb-count").hidden = counts.todo === 0;
+  $("orb-logo").toggleAttribute("hidden", counts.todo > 0);
+  $("orb").dataset.digits = String(counts.todo).length;
+  $("orb").setAttribute(
+    "aria-label",
+    counts.todo
+      ? t("{n} to-dos. Open Pebble", { n: counts.todo })
+      : t("Open") + " Pebble",
+  );
   const today = D.localDate(),
     daily = state.tasks.filter(
       (task) =>
@@ -416,14 +424,33 @@ function scheduleClose() {
       window.desktop.collapse();
   }, 750);
 }
+function applyWindowState(value) {
+  expanded = value.expanded;
+  $("widget").classList.toggle("orb-left", value.orbSide === "left");
+  const panel = $("panel");
+  panel.inert = !expanded;
+  if (expanded) {
+    const wasHidden = panel.hidden;
+    panel.hidden = false;
+    if (wasHidden) {
+      $("widget").classList.remove("is-expanded");
+      void panel.offsetHeight;
+    }
+    requestAnimationFrame(() => {
+      if (expanded) $("widget").classList.add("is-expanded");
+    });
+  } else {
+    $("widget").classList.remove("is-expanded");
+    panel.hidden = !value.collapsing;
+  }
+}
 async function initialize() {
   const loaded = await window.desktop.load();
   state = loaded.state;
   render();
   if (loaded.notice) toast(I.error(language(), loaded.notice));
   window.desktop.onWindow((value) => {
-    expanded = value.expanded;
-    $("panel").hidden = !expanded;
+    applyWindowState(value);
     if (state.settings.pinned !== value.pinned) {
       const next = clone(state);
       next.settings.pinned = value.pinned;
@@ -435,10 +462,7 @@ async function initialize() {
       $("quick-title").focus();
     }
   });
-  if (window.innerWidth > 100) {
-    expanded = true;
-    $("panel").hidden = false;
-  }
+  applyWindowState(await window.desktop.windowState());
   $("language-toggle").onclick = () =>
     setLanguage(language() === "en" ? "zh" : "en");
   $("ui-language").onchange = (event) => setLanguage(event.target.value);
