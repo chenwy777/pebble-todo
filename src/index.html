@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Pebble · Your day, a little lighter</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="domain.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <div id="widget">
+      <main id="panel" aria-label="Pebble 待办面板" hidden>
+        <header class="header">
+          <div class="brand">
+            <span class="brand-mark">p</span
+            ><span>pebble<span class="brand-period">.</span></span
+            ><span class="edition">YOUR LITTLE SPACE</span>
+          </div>
+          <div class="window-actions">
+            <button
+              id="pin"
+              class="icon-button"
+              title="固定展开"
+              aria-label="固定展开"
+              aria-pressed="false"
+              data-icon="pin"
+            ></button>
+            <button
+              id="settings-button"
+              class="icon-button"
+              title="偏好设置"
+              aria-label="偏好设置"
+              data-icon="settings"
+            ></button>
+            <button
+              id="collapse"
+              class="icon-button"
+              title="收起面板"
+              aria-label="收起面板"
+              data-icon="minus"
+            ></button>
+          </div>
+        </header>
+        <section class="day-heading">
+          <button id="date-toggle" title="点击切换中英文日期">
+            <span id="weekday"></span><span id="date"></span
+            ><span class="date-switch">中 / EN</span>
+          </button>
+          <p>A little space. A clearer day.</p>
+        </section>
+        <section class="daily-summary" aria-label="完成进度">
+          <div>
+            <span class="summary-dot"></span
+            ><span id="summary">慢慢来，一件一件完成。</span
+            ><span id="progress-label"></span>
+          </div>
+          <div class="progress-track"><div id="progress-bar"></div></div>
+        </section>
+        <nav class="tabs" aria-label="任务状态">
+          <button data-tab="todo" class="tab active">
+            To-do <span id="count-todo">0</span>
+          </button>
+          <button data-tab="doing" class="tab">
+            Doing <span id="count-doing">0</span>
+          </button>
+          <button data-tab="done" class="tab">
+            Done <span id="count-done">0</span>
+          </button>
+          <button data-tab="templates" class="tab" title="快捷模板">
+            <span data-icon="sparkles"></span> 快捷
+          </button>
+        </nav>
+        <div class="list-toolbar">
+          <span id="list-label">留一点空间给重要的事</span
+          ><select id="category-filter" aria-label="按分类筛选">
+            <option value="all">所有分类</option>
+          </select>
+        </div>
+        <section
+          id="task-list"
+          aria-label="事项列表"
+          class="task-list"
+        ></section>
+        <section
+          id="template-list"
+          aria-label="快捷模板"
+          class="template-list"
+          hidden
+        ></section>
+        <footer class="composer-wrap">
+          <form id="quick-form" autocomplete="off">
+            <div class="quick-input-row">
+              <span class="input-plus" data-icon="plus"></span
+              ><input
+                id="quick-title"
+                maxlength="240"
+                placeholder="记下下一件小事…"
+                aria-label="新增事项"
+                required
+              /><button
+                id="quick-submit"
+                class="add-button"
+                type="submit"
+                title="添加事项"
+                aria-label="添加事项"
+                data-icon="arrow"
+              ></button>
+            </div>
+            <div class="composer-options">
+              <select id="quick-category" aria-label="新增事项的分类"></select
+              ><button id="schedule-button" type="button">
+                <span data-icon="clock"></span> 日期 / 时长</button
+              ><span class="enter-hint">Enter 添加</span>
+            </div>
+          </form>
+          <button id="new-template" class="new-template" hidden>
+            <span data-icon="plus"></span> 创建快捷模板
+          </button>
+        </footer>
+        <div class="panel-footnote">
+          <span class="local-dot"></span>保存在这台电脑<span
+            >Ctrl / ⌘ + Shift + Space</span
+          >
+        </div>
+      </main>
+      <div id="orb-row">
+        <span id="orb-caption" hidden>YOUR DAY, A LITTLE LIGHTER</span
+        ><button
+          id="orb"
+          title="停留展开 · 拖动移动 · 右键菜单"
+          aria-label="展开 Pebble"
+        >
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M15 31V18c0-5 4-8 9-8s10 4 10 10-4 10-10 10h-4" />
+            <circle cx="24" cy="20" r="3" /></svg
+          ><span id="orb-count" hidden></span>
+        </button>
+      </div>
+    </div>
+    <dialog id="task-dialog">
+      <form id="task-form" class="dialog-form" autocomplete="off">
+        <div class="dialog-heading">
+          <div>
+            <span class="eyebrow">MAKE A LITTLE ROOM</span>
+            <h2 id="task-dialog-title">添加事项</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button dialog-close"
+            aria-label="关闭"
+            data-icon="close"
+          ></button>
+        </div>
+        <label
+          >想做什么？<input
+            id="task-title"
+            required
+            maxlength="240"
+            placeholder="例如：修改 CV / Go swimming"
+            autofocus
+        /></label>
+        <div class="field-pair">
+          <label
+            >状态<select id="task-status">
+              <option value="todo">To-do · 待办</option>
+              <option value="doing">Doing · 进行中</option>
+              <option value="done">Done · 已完成</option>
+            </select></label
+          ><label>分类<select id="task-category"></select></label>
+        </div>
+        <label
+          >安排在哪天？
+          <div class="date-field">
+            <input id="task-date" type="date" aria-label="任务日期" /><button
+              type="button"
+              id="today-button"
+              class="text-button"
+            >
+              今天</button
+            ><button type="button" id="clear-date" class="text-button">
+              清除
+            </button>
+          </div></label
+        >
+        <fieldset>
+          <legend>时间设置 <span>可选</span></legend>
+          <div class="time-modes">
+            <label
+              ><input type="radio" name="time-mode" value="none" checked /><span
+                >不设时间</span
+              ></label
+            ><label
+              ><input type="radio" name="time-mode" value="duration" /><span
+                >预计时长</span
+              ></label
+            ><label
+              ><input type="radio" name="time-mode" value="range" /><span
+                >时间段</span
+              ></label
+            >
+          </div>
+          <div id="range-fields" class="field-pair" hidden>
+            <label
+              >开始<input id="time-start" type="time" value="09:00" /></label
+            ><label
+              >结束<input id="time-end" type="time" value="10:00"
+            /></label>
+          </div>
+          <div id="duration-fields" hidden>
+            <div class="field-pair">
+              <label
+                >小时<input
+                  id="time-hours"
+                  type="number"
+                  min="0"
+                  max="168"
+                  step="1"
+                  value="0" /></label
+              ><label
+                >分钟<input
+                  id="time-minutes"
+                  type="number"
+                  min="0"
+                  max="59"
+                  step="1"
+                  value="30"
+              /></label>
+            </div>
+            <div class="duration-presets">
+              <button type="button" data-duration="15">15 分钟</button
+              ><button type="button" data-duration="30">30 分钟</button
+              ><button type="button" data-duration="60">1 小时</button
+              ><button type="button" data-duration="90">1.5 小时</button>
+            </div>
+          </div>
+          <div id="calculate-end" hidden>
+            <button id="calculate-toggle" type="button" class="text-button">
+              按时长推算结束时间
+            </button>
+            <div id="calculate-fields" hidden>
+              <div class="inline-calc">
+                <input
+                  id="calc-hours"
+                  type="number"
+                  min="0"
+                  max="23"
+                  value="1"
+                  aria-label="推算小时"
+                />小时<input
+                  id="calc-minutes"
+                  type="number"
+                  min="0"
+                  max="59"
+                  value="0"
+                  aria-label="推算分钟"
+                />分钟<button
+                  id="apply-duration"
+                  type="button"
+                  class="text-button"
+                >
+                  计算
+                </button>
+              </div>
+            </div>
+          </div>
+          <p id="time-preview" class="time-preview" aria-live="polite">
+            留白也很好，随时可以再安排。
+          </p>
+        </fieldset>
+        <p id="task-error" class="form-error" role="alert"></p>
+        <button type="submit" class="primary-button" id="save-task">
+          添加到 To-do
+        </button>
+      </form>
+    </dialog>
+    <dialog id="settings-dialog">
+      <div class="dialog-form settings-form">
+        <div class="dialog-heading">
+          <div>
+            <span class="eyebrow">A SPACE THAT FEELS LIKE YOU</span>
+            <h2>偏好设置</h2>
+          </div>
+          <button
+            class="icon-button dialog-close"
+            aria-label="关闭"
+            data-icon="close"
+          ></button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <strong>文字颜色</strong>
+            <p>给你的小空间一点个性</p>
+          </div>
+          <input id="text-color" type="color" aria-label="文字颜色" />
+        </div>
+        <label class="opacity-label"
+          >面板不透明度 <span id="opacity-value"></span
+          ><input id="opacity" type="range" min="70" max="100" step="1"
+        /></label>
+        <div class="section-label">我的分类<span>最多 100 个</span></div>
+        <div id="category-manager"></div>
+        <form id="category-form" class="inline-form">
+          <input
+            id="category-name"
+            placeholder="新增分类，例如：创作"
+            maxlength="30"
+            aria-label="分类名称"
+            required
+          /><input
+            id="category-color"
+            type="color"
+            value="#8c94d9"
+            aria-label="分类颜色"
+          /><button class="small-button" type="submit">添加</button>
+        </form>
+        <div class="section-label">数据备份<span>仅存本地，不上传</span></div>
+        <div class="backup-actions">
+          <button id="export-data">导出备份</button
+          ><button id="import-data">导入备份</button>
+        </div>
+        <p class="settings-note">
+          拖动小球可以移动位置。右键小球可以退出。<br />AI
+          连接将在后续版本接入。
+        </p>
+        <div class="about">
+          pebble<span>.</span> <small>v0.1.0 · made for a lighter day</small>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="template-dialog">
+      <form id="template-form" class="dialog-form">
+        <div class="dialog-heading">
+          <div>
+            <span class="eyebrow">YOUR SMALL ROUTINES</span>
+            <h2>创建快捷模板</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button dialog-close"
+            aria-label="关闭"
+            data-icon="close"
+          ></button>
+        </div>
+        <label
+          >事项名称<input
+            id="template-title"
+            required
+            maxlength="240"
+            placeholder="例如：散步 / Practice English" /></label
+        ><label>分类<select id="template-category"></select></label
+        ><label
+          >预计时长（分钟，可留空）<input
+            id="template-duration"
+            type="number"
+            min="1"
+            max="10080"
+            step="1"
+            placeholder="例如：30"
+        /></label>
+        <p id="template-error" class="form-error" role="alert"></p>
+        <button class="primary-button" type="submit">保存模板</button>
+      </form>
+    </dialog>
+    <div id="toast" role="status" hidden>
+      <span id="toast-message"></span><button id="undo" hidden>撤销</button
+      ><button id="dismiss-toast" aria-label="关闭提示">×</button>
+    </div>
+  </body>
+</html>

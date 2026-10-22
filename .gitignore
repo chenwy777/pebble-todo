@@ -1,0 +1,8 @@
+node_modules/
+release/
+test-results/
+.DS_Store
+Thumbs.db
+*.log
+.env*
+!.env.example
