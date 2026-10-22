@@ -1,6 +1,51 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const D = require("../src/domain.js");
+const I = require("../src/i18n.js");
+
+test("new profiles default to English and built-in labels are localizable", () => {
+  const state = D.createState();
+  assert.equal(state.settings.language, "en");
+  assert.equal(state.categories[0].name, "Career");
+  assert.equal(state.templates[0].title, "Review CV");
+  assert.equal(I.t("zh", state.categories[0].builtinKey), "求职");
+  assert.equal(
+    I.t("zh", "Estimated {duration}", { duration: "1小时30分钟" }),
+    "预计 1小时30分钟",
+  );
+  assert.equal(
+    I.error("zh", "Start and end times must be different."),
+    "开始和结束时间不能相同。",
+  );
+});
+
+test("legacy defaults migrate while customized names, tasks and selected language survive validation", () => {
+  const state = D.createState();
+  delete state.settings.language;
+  state.settings.dateLanguage = "zh";
+  state.categories[0].name = "求职";
+  delete state.categories[0].builtinKey;
+  state.categories[1].name = "Research / 研究";
+  delete state.categories[1].builtinKey;
+  state.templates[0].title = "改我的 CV";
+  delete state.templates[0].builtinKey;
+  state.tasks.push(D.makeTask({ title: "我的事项", categoryId: "career" }));
+  const migrated = D.validateState(state);
+  assert.equal(migrated.settings.language, "en");
+  assert.equal(migrated.settings.dateLanguage, "en");
+  assert.equal(migrated.categories[0].name, "Career");
+  assert.equal(migrated.categories[1].name, "Research / 研究");
+  assert.equal(migrated.categories[1].builtinKey, "");
+  assert.equal(migrated.templates[0].title, "改我的 CV");
+  assert.equal(migrated.tasks[0].title, "我的事项");
+  migrated.settings.language = "zh";
+  migrated.settings.dateLanguage = "zh";
+  migrated.categories[0].name = "Career edited";
+  const custom = D.validateState(migrated);
+  assert.equal(custom.categories[0].name, "Career edited");
+  assert.equal(custom.categories[0].builtinKey, "");
+  assert.equal(custom.settings.language, "zh");
+});
 
 test("time ranges calculate minutes and explicitly identify next-day endings", () => {
   assert.deepEqual(

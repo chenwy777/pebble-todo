@@ -30,12 +30,16 @@ class Store {
         );
         await fs.copyFile(this.file, this.file + `.damaged-${Date.now()}`);
         await fs.rm(this.file);
-        this.recoveryNotice = "数据文件损坏，已恢复上一次备份。原文件已保留。";
+        this.recoveryNotice =
+          "Task data was damaged. The previous backup was restored and the original file was kept.";
         return backup;
       } catch {
-        throw new Error("无法读取任务文件。原文件已保留，请先备份后检查。", {
-          cause: error,
-        });
+        throw new Error(
+          "Unable to read tasks. The original file was kept. Back it up before checking it.",
+          {
+            cause: error,
+          },
+        );
       }
     }
   }

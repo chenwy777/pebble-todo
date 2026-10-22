@@ -10,6 +10,25 @@ async function main() {
   await fs.mkdir(results, { recursive: true });
   let app;
   const errors = [];
+  async function nativeMenuLabels() {
+    return app.evaluate(({ Menu, ipcMain }) => {
+      const original = Menu.buildFromTemplate;
+      let labels;
+      try {
+        Menu.buildFromTemplate = (items) => ({
+          popup() {
+            labels = items
+              .filter((item) => item.label)
+              .map((item) => item.label);
+          },
+        });
+        ipcMain.emit("window:menu");
+        return labels;
+      } finally {
+        Menu.buildFromTemplate = original;
+      }
+    });
+  }
   async function launch() {
     const executable = process.env.PEBBLE_TEST_EXECUTABLE;
     app = await electron.launch({
@@ -27,24 +46,51 @@ async function main() {
   }
   try {
     let page = await launch();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    assert.deepEqual(await nativeMenuLabels(), [
+      "Collapse",
+      "Pin open",
+      "Quit Pebble",
+    ]);
+    await expect(page.locator("#quick-title")).toHaveAttribute(
+      "placeholder",
+      "Add a task…",
+    );
+    assert.equal(
+      await page
+        .locator("body")
+        .innerText()
+        .then((text) => /[\u4e00-\u9fff]/.test(text.replace("中文", ""))),
+      false,
+    );
+    await expect(
+      page.locator('#quick-category option[value="career"]'),
+    ).toHaveText("Career");
     await page.locator("#quick-title").fill("复习 CV / Review résumé");
     await page.locator("#quick-category").selectOption("career");
     await page.locator("#schedule-button").click();
     await page
       .locator(".time-modes label")
-      .filter({ hasText: "时间段" })
+      .filter({ hasText: "Time range" })
       .click();
     await page.locator("#time-start").fill("23:30");
+    await page.locator("#time-end").fill("23:30");
+    await page.locator("#save-task").click();
+    await expect(page.locator("#task-error")).toHaveText(
+      "Start and end times must be different.",
+    );
     await page.locator("#time-end").fill("01:00");
     await expect(page.locator("#time-preview")).toContainText(
-      "次日 01:00 · 1小时30分钟",
+      "next day 01:00 · 1h 30m",
     );
     await page.locator("#today-button").click();
     await page.locator("#save-task").click();
     await expect(page.locator(".task-title")).toHaveText(
       "复习 CV / Review résumé",
     );
-    await expect(page.locator(".task-schedule")).toContainText("次日 01:00");
+    await expect(page.locator(".task-schedule")).toContainText(
+      "next day 01:00",
+    );
     await page.locator(".status-button").click();
     await page.locator('[data-tab="doing"]').click();
     await expect(page.locator(".task-title")).toHaveCount(1);
@@ -56,14 +102,14 @@ async function main() {
       .locator('[data-template-id="swim"] [data-action="use-template"]')
       .click();
     await page.locator("#task-status").selectOption("doing");
-    await expect(page.locator("#time-preview")).toContainText("1小时");
+    await expect(page.locator("#time-preview")).toContainText("1h");
     await page.locator("#save-task").click();
     await page.locator('[data-tab="doing"]').click();
-    await expect(page.locator(".task-title")).toHaveText("游泳");
+    await expect(page.locator(".task-title")).toHaveText("Swimming");
     await page.locator(".task-body").click();
     await page
       .locator(".time-modes label")
-      .filter({ hasText: "时间段" })
+      .filter({ hasText: "Time range" })
       .click();
     await page.locator("#time-start").fill("14:30");
     await page.locator("#calculate-toggle").click();
@@ -71,19 +117,33 @@ async function main() {
     await page.locator("#calc-minutes").fill("45");
     await page.locator("#apply-duration").click();
     await expect(page.locator("#time-end")).toHaveValue("16:15");
-    await expect(page.locator("#time-preview")).toContainText("1小时45分钟");
+    await expect(page.locator("#time-preview")).toContainText("1h 45m");
     await page.screenshot({
       path: path.join(results, "time-editor.png"),
       omitBackground: true,
     });
     await page.locator("#save-task").click();
-    await page.locator("#settings-button").click();
+    await page.locator("#quick-category").selectOption("__new");
+    await expect(page.locator("#category-dialog")).toBeVisible();
     await page.locator("#category-name").fill("创作");
     await page.locator("#category-form button").click();
     await expect(
       page.locator('#category-manager input[type="text"]'),
     ).toHaveCount(5);
-    await page.locator("#settings-dialog .dialog-close").click();
+    await expect(page.locator("#toast-message")).toHaveText("Category added");
+    const study = page.locator('[data-category-id="study"] input[type="text"]');
+    await study.fill("Research / 研究");
+    await study.press("Tab");
+    await expect(page.locator("#toast-message")).toHaveText("Category updated");
+    await page.screenshot({
+      path: path.join(results, "categories.png"),
+      omitBackground: true,
+      scale: "css",
+    });
+    await page.locator("#category-dialog .dialog-close").click();
+    await expect(page.locator("#quick-category option:checked")).toHaveText(
+      "创作",
+    );
     await page.locator('[data-tab="todo"]').click();
     await page.locator("#quick-title").fill("<img src=x onerror=alert(1)>");
     await page.locator("#quick-form").evaluate((form) => form.requestSubmit());
@@ -114,23 +174,55 @@ async function main() {
     await page.locator(".task-body").filter({ hasText: "整理作品集" }).click();
     await page
       .locator(".time-modes label")
-      .filter({ hasText: "预计时长" })
+      .filter({ hasText: "Duration" })
       .click();
     await page.locator("#time-hours").fill("1");
     await page.locator("#time-minutes").fill("30");
     await page.locator("#today-button").click();
-    await expect(page.locator("#time-preview")).toContainText("1小时30分钟");
+    await expect(page.locator("#time-preview")).toContainText("1h 30m");
     await page.locator("#save-task").click();
     await expect(
-      page.locator(".task-schedule").filter({ hasText: "1小时30分钟" }),
+      page.locator(".task-schedule").filter({ hasText: "1h 30m" }),
     ).toHaveCount(1);
     await page.locator("#date-toggle").click();
     await expect(page.locator("#weekday")).toContainText("星期");
+    await page.locator("#date-toggle").click();
+    await expect(page.locator("#weekday")).not.toContainText("星期");
     await page.locator("#pin").click();
     await expect(page.locator("#pin")).toHaveAttribute("aria-pressed", "true");
     await page.locator("#dismiss-toast").click();
     await page.screenshot({
       path: path.join(results, "desktop-expanded.png"),
+      omitBackground: true,
+      scale: "css",
+    });
+    await page.locator('[data-tab="templates"]').click();
+    await page.screenshot({
+      path: path.join(results, "templates.png"),
+      omitBackground: true,
+      scale: "css",
+    });
+    await page.locator('[data-tab="todo"]').click();
+    await page.locator("#language-toggle").click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+    assert.deepEqual(await nativeMenuLabels(), [
+      "收起",
+      "固定展开",
+      "退出 Pebble",
+    ]);
+    await expect(page.locator("#manage-categories")).toHaveText("管理分类");
+    await expect(page.locator("#quick-title")).toHaveAttribute(
+      "placeholder",
+      "添加事项…",
+    );
+    await expect(
+      page.locator('#quick-category option[value="study"]'),
+    ).toHaveText("Research / 研究");
+    await expect(
+      page.locator('#quick-category option[value="career"]'),
+    ).toHaveText("求职");
+    await page.screenshot({
+      path: path.join(results, "desktop-zh.png"),
       omitBackground: true,
       scale: "css",
     });
@@ -155,9 +247,11 @@ async function main() {
     );
     assert.equal(saved.tasks.length, 5);
     assert.equal(saved.settings.dateLanguage, "zh");
+    assert.equal(saved.settings.language, "zh");
     await app.close();
     page = await launch();
     await expect(page.locator(".task-title")).toHaveCount(3);
+    await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
     await expect(page.locator("#weekday")).toContainText("星期");
     await page.locator("#collapse").click();
     await expect(page.locator("#panel")).toBeHidden();
@@ -199,11 +293,11 @@ async function main() {
     );
     await page.locator("#settings-button").click();
     await page.locator("#import-data").click();
-    await expect(page.locator("#toast-message")).toHaveText("备份已导入");
+    await expect(page.locator("#toast-message")).toHaveText("Backup imported");
     await expect(page.locator(".task-title")).toHaveText("从备份恢复的事项");
     await expect(page.locator("#pin")).toHaveAttribute("aria-pressed", "true");
     await page.locator("#export-data").click();
-    await expect(page.locator("#toast-message")).toHaveText("备份已导出");
+    await expect(page.locator("#toast-message")).toHaveText("Backup exported");
     assert.equal(
       JSON.parse(await fs.readFile(exportPath, "utf8")).tasks[0].title,
       "从备份恢复的事项",
@@ -214,7 +308,7 @@ async function main() {
     await expect(page.locator("#pin")).toHaveAttribute("aria-pressed", "true");
     assert.deepEqual(errors, []);
     console.log(
-      "PASS: desktop add / edit / status / time / templates / categories / undo / safe text / restart / native collapse / hover / import / export",
+      "PASS: desktop add / edit / status / time / templates / categories / undo / safe text / restart / native collapse / hover / import / export / English defaults / Chinese switch / custom category edits",
     );
     console.log(`Screenshots: ${results}`);
   } catch (error) {

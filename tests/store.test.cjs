@@ -59,6 +59,6 @@ test("unrecoverable corruption is surfaced instead of silently discarding tasks"
   const store = await fixture(t);
   await store.load();
   await fs.writeFile(store.file, "broken JSON");
-  await assert.rejects(() => store.load(), /原文件已保留/);
+  await assert.rejects(() => store.load(), /original file was kept/);
   assert.equal(await fs.readFile(store.file, "utf8"), "broken JSON");
 });

@@ -13,6 +13,8 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { Store } = require("./store.cjs");
 const { validateState } = require("../src/domain.js");
+const I = require("../src/i18n.js");
+const t = (key, values) => I.t(state?.settings.language || "en", key, values);
 
 const testMode = process.argv.includes("--smoke-test");
 const dataArg = process.argv.find((arg) => arg.startsWith("--data-dir="));
@@ -69,22 +71,24 @@ function open() {
     });
   }
   win.showInactive();
+  win.setAlwaysOnTop(true, "floating");
   notify();
 }
 function close(force = false) {
   if (!win || (!force && pinned) || drag || !expanded) return;
   expanded = false;
   win.setBounds({ ...constrain(anchor), width: compact, height: compact });
+  win.setAlwaysOnTop(true, "floating");
   notify();
 }
 function menu() {
   Menu.buildFromTemplate([
     {
-      label: expanded ? "收起 / Collapse" : "展开 / Open",
+      label: t(expanded ? "Collapse" : "Open"),
       click: () => (expanded ? close(true) : open()),
     },
     {
-      label: "固定展开 / Pin open",
+      label: t("Pin open"),
       type: "checkbox",
       checked: pinned,
       click: (item) => {
@@ -94,7 +98,7 @@ function menu() {
       },
     },
     { type: "separator" },
-    { label: "退出 Pebble / Quit", click: () => app.quit() },
+    { label: t("Quit Pebble"), click: () => app.quit() },
   ]).popup({ window: win });
 }
 async function saveState(next) {
@@ -115,7 +119,7 @@ function registerIPC() {
   ipcMain.handle("data:save", (_, value) => saveState(value));
   ipcMain.handle("data:export", async () => {
     const result = await dialog.showSaveDialog(win, {
-      title: "导出 Pebble 备份",
+      title: t("Export Pebble backup"),
       defaultPath: "pebble-backup.json",
       filters: [{ name: "JSON", extensions: ["json"] }],
     });
@@ -126,21 +130,24 @@ function registerIPC() {
   });
   ipcMain.handle("data:import", async () => {
     const result = await dialog.showOpenDialog(win, {
-      title: "导入 Pebble 备份",
+      title: t("Import Pebble backup"),
       properties: ["openFile"],
       filters: [{ name: "JSON", extensions: ["json"] }],
     });
     if (result.canceled) return null;
     const stat = await fs.stat(result.filePaths[0]);
-    if (stat.size > 10 * 1024 * 1024) throw new Error("备份文件不能超过 10 MB");
+    if (stat.size > 10 * 1024 * 1024)
+      throw new Error("Backup files cannot exceed 10 MB.");
     const imported = validateState(
       JSON.parse(await fs.readFile(result.filePaths[0], "utf8")),
     );
     const confirm = await dialog.showMessageBox(win, {
       type: "question",
-      message: `用备份中的 ${imported.tasks.length} 条事项替换当前列表？`,
-      detail: "当前数据会保留在本地自动备份中。",
-      buttons: ["取消", "导入"],
+      message: t("Replace the current list with {n} tasks from this backup?", {
+        n: imported.tasks.length,
+      }),
+      detail: t("The current data will be kept in the local automatic backup."),
+      buttons: [t("Cancel"), t("Import")],
       defaultId: 0,
       cancelId: 0,
     });
@@ -186,7 +193,12 @@ function registerIPC() {
       state.settings.position = pos;
       store
         .save(state)
-        .catch((error) => dialog.showErrorBox("无法保存位置", error.message));
+        .catch((error) =>
+          dialog.showErrorBox(
+            t("Unable to save position"),
+            I.error(state.settings.language, error.message),
+          ),
+        );
     }
   });
 }
@@ -227,6 +239,7 @@ async function createWindow() {
   registerIPC();
   await win.loadFile(path.join(__dirname, "../src/index.html"));
   win.showInactive();
+  win.setAlwaysOnTop(true, "floating");
   if (pinned || testMode || process.argv.includes("--open")) open();
   win.on("close", (event) => {
     if (!quitting) {
@@ -244,7 +257,7 @@ async function createWindow() {
   if (!icon.isEmpty()) {
     icon.setTemplateImage(true);
     tray = new Tray(icon);
-    tray.setToolTip("Pebble · Your day, a little lighter");
+    tray.setToolTip("Pebble");
     tray.on("click", () => {
       open();
       win.focus();
@@ -277,7 +290,10 @@ else {
     .whenReady()
     .then(createWindow)
     .catch((error) => {
-      dialog.showErrorBox("Pebble 无法启动", error.message);
+      dialog.showErrorBox(
+        t("Unable to start Pebble"),
+        I.error(state?.settings.language || "en", error.message),
+      );
       app.exit(1);
     });
 }

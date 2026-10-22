@@ -12,7 +12,7 @@
   };
   function minutes(value) {
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value || ""))
-      fail("请选择有效的开始和结束时间");
+      fail("Enter valid start and end times.");
     const [h, m] = value.split(":").map(Number);
     return h * 60 + m;
   }
@@ -25,13 +25,13 @@
         durationMinutes < 1 ||
         durationMinutes > 10080
       )
-        fail("预计时长须为 1 分钟至 168 小时");
+        fail("Duration must be 1 minute to 168 hours.");
       return { mode: "duration", durationMinutes };
     }
     if (time.mode === "range") {
       const start = minutes(time.start),
         end = minutes(time.end);
-      if (start === end) fail("开始和结束时间不能相同");
+      if (start === end) fail("Start and end times must be different.");
       return {
         mode: "range",
         start: time.start,
@@ -40,7 +40,7 @@
         overnight: end < start,
       };
     }
-    fail("未知时间类型");
+    fail("Unknown time type.");
   }
   function formatDuration(value, language = "zh") {
     const h = Math.floor(value / 60),
@@ -48,6 +48,30 @@
     return language === "en"
       ? [h ? `${h}h` : "", m ? `${m}m` : ""].filter(Boolean).join(" ")
       : [h ? `${h}小时` : "", m ? `${m}分钟` : ""].filter(Boolean).join("");
+  }
+  const categoryDefaults = {
+    career: ["Career", "求职"],
+    study: ["Study", "学习"],
+    sport: ["Exercise", "运动"],
+    life: ["Personal", "生活"],
+  };
+  const templateDefaults = {
+    cv: ["Review CV", "修改 CV"],
+    apply: ["Apply for jobs", "投递岗位"],
+    read: ["Read / study", "阅读 / 学习"],
+    swim: ["Swimming", "游泳"],
+    badminton: ["Badminton", "羽毛球"],
+    boulder: ["Bouldering", "抱石"],
+  };
+  function preset(item, defaults, field) {
+    const names = defaults[item.id];
+    if (
+      names &&
+      names.includes(item[field]) &&
+      (item.builtinKey === names[0] || !Object.hasOwn(item, "builtinKey"))
+    )
+      return { [field]: names[0], builtinKey: names[0] };
+    return { [field]: item[field], builtinKey: "" };
   }
   function createState() {
     const categories = [
@@ -59,7 +83,10 @@
     return {
       schemaVersion: 1,
       tasks: [],
-      categories,
+      categories: categories.map((c) => ({
+        ...c,
+        ...preset(c, categoryDefaults, "name"),
+      })),
       templates: [
         {
           id: "cv",
@@ -92,9 +119,10 @@
           categoryId: "sport",
           durationMinutes: 90,
         },
-      ],
+      ].map((t) => ({ ...t, ...preset(t, templateDefaults, "title") })),
       settings: {
         dateLanguage: "en",
+        language: "en",
         textColor: "#292c2b",
         opacity: 94,
         pinned: false,
@@ -111,12 +139,12 @@
   }
   function text(value, max, label) {
     if (typeof value !== "string" || !value.trim() || value.trim().length > max)
-      fail(`${label}不能为空，最多 ${max} 个字符`);
+      fail(`${label} must contain 1 to ${max} characters.`);
     return value.trim();
   }
   function color(value) {
     if (typeof value !== "string" || !/^#[a-f\d]{6}$/i.test(value))
-      fail("请选择有效颜色");
+      fail("Choose a valid color.");
     return value;
   }
   function validateState(input) {
@@ -127,37 +155,39 @@
       !Array.isArray(input.categories) ||
       !Array.isArray(input.templates)
     )
-      fail("不支持的数据文件");
+      fail("Unsupported data file.");
     if (
       input.tasks.length > 10000 ||
       input.categories.length > 100 ||
       input.templates.length > 1000
     )
-      fail("事项、分类或模板数量过多");
+      fail("Too many tasks, categories or templates.");
     const ids = new Set();
     const id = (value) => {
-      const result = text(value, 100, "标识");
-      if (ids.has(result)) fail("数据中有重复标识");
+      const result = text(value, 100, "ID");
+      if (ids.has(result)) fail("Duplicate data IDs.");
       ids.add(result);
       return result;
     };
     const categories = input.categories.map((c) => ({
       id: id(c.id),
-      name: text(c.name, 30, "分类名称"),
+      name: text(preset(c, categoryDefaults, "name").name, 30, "Category name"),
+      builtinKey: preset(c, categoryDefaults, "name").builtinKey,
       color: color(c.color),
     }));
     const categoryIds = new Set(categories.map((c) => c.id));
     const category = (value) => {
-      if (value !== "" && !categoryIds.has(value)) fail("分类不存在");
+      if (value !== "" && !categoryIds.has(value))
+        fail("Category does not exist.");
       return value;
     };
     const tasks = input.tasks.map((t) => {
       if (!statuses.includes(t.status) || !validDate(t.date))
-        fail("事项状态或日期无效");
+        fail("Invalid task status or date.");
       const createdAt = new Date(t.createdAt).toISOString();
       return {
         id: id(t.id),
-        title: text(t.title, 240, "事项"),
+        title: text(t.title, 240, "Task"),
         categoryId: category(t.categoryId),
         status: t.status,
         date: t.date,
@@ -171,7 +201,8 @@
     });
     const templates = input.templates.map((t) => ({
       id: id(t.id),
-      title: text(t.title, 240, "模板"),
+      title: text(preset(t, templateDefaults, "title").title, 240, "Template"),
+      builtinKey: preset(t, templateDefaults, "title").builtinKey,
       categoryId: category(t.categoryId),
       durationMinutes: t.durationMinutes
         ? normalizeTime({
@@ -193,7 +224,8 @@
       categories,
       templates,
       settings: {
-        dateLanguage: s.dateLanguage === "zh" ? "zh" : "en",
+        dateLanguage: s.language && s.dateLanguage === "zh" ? "zh" : "en",
+        language: s.language === "zh" ? "zh" : "en",
         textColor: color(s.textColor || "#292c2b"),
         opacity: Math.max(70, Math.min(100, Number(s.opacity) || 94)),
         pinned: Boolean(s.pinned),
@@ -205,7 +237,7 @@
     const now = new Date().toISOString();
     return {
       id: uid(),
-      title: text(values.title, 240, "事项"),
+      title: text(values.title, 240, "Task"),
       categoryId: values.categoryId || "",
       status: values.status || "todo",
       date: values.date || "",

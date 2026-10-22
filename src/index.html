@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,137 +7,127 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
-    <title>Pebble · Your day, a little lighter</title>
-    <link rel="stylesheet" href="styles.css" />
+    <title>Pebble</title>
+    <link rel="stylesheet" href="ui.css" />
     <script defer src="domain.js"></script>
-    <script defer src="app.js"></script>
+    <script defer src="i18n.js"></script>
+    <script defer src="ui.js"></script>
   </head>
   <body>
     <div id="widget">
-      <main id="panel" aria-label="Pebble 待办面板" hidden>
+      <main id="panel" aria-label="Pebble" hidden>
         <header class="header">
-          <div class="brand">
-            <span class="brand-mark">p</span
-            ><span>pebble<span class="brand-period">.</span></span
-            ><span class="edition">YOUR LITTLE SPACE</span>
-          </div>
+          <span class="brand">Pebble</span>
           <div class="window-actions">
+            <button
+              id="language-toggle"
+              class="language-button"
+              title="Language"
+            >
+              中文
+            </button>
             <button
               id="pin"
               class="icon-button"
-              title="固定展开"
-              aria-label="固定展开"
+              data-title="Pin open"
               aria-pressed="false"
               data-icon="pin"
             ></button>
             <button
               id="settings-button"
               class="icon-button"
-              title="偏好设置"
-              aria-label="偏好设置"
+              data-title="Settings"
               data-icon="settings"
             ></button>
             <button
               id="collapse"
               class="icon-button"
-              title="收起面板"
-              aria-label="收起面板"
+              data-title="Collapse"
               data-icon="minus"
             ></button>
           </div>
         </header>
         <section class="day-heading">
-          <button id="date-toggle" title="点击切换中英文日期">
-            <span id="weekday"></span><span id="date"></span
-            ><span class="date-switch">中 / EN</span>
+          <button id="date-toggle" data-title="Click to change date language">
+            <span id="weekday"></span><span id="date"></span>
           </button>
-          <p>A little space. A clearer day.</p>
         </section>
-        <section class="daily-summary" aria-label="完成进度">
-          <div>
-            <span class="summary-dot"></span
-            ><span id="summary">今日进度</span
-            ><span id="progress-label"></span>
-          </div>
-          <div class="progress-track"><div id="progress-bar"></div></div>
+        <section class="daily-summary">
+          <span id="summary">Today’s progress</span
+          ><span id="progress-label">0 / 0</span>
         </section>
-        <nav class="tabs" aria-label="任务状态">
+        <nav class="tabs" aria-label="Status">
           <button data-tab="todo" class="tab active">
-            To-do <span id="count-todo">0</span>
+            <span data-t="To-do">To-do</span
+            ><span id="count-todo" class="count">0</span>
           </button>
           <button data-tab="doing" class="tab">
-            Doing <span id="count-doing">0</span>
+            <span data-t="Doing">Doing</span
+            ><span id="count-doing" class="count">0</span>
           </button>
           <button data-tab="done" class="tab">
-            Done <span id="count-done">0</span>
+            <span data-t="Done">Done</span
+            ><span id="count-done" class="count">0</span>
           </button>
-          <button data-tab="templates" class="tab" title="快捷模板">
-            <span data-icon="sparkles"></span> 快捷
+          <button data-tab="templates" class="tab">
+            <span data-t="Templates">Templates</span>
           </button>
         </nav>
         <div class="list-toolbar">
-          <span id="list-label">待办事项</span
-          ><select id="category-filter" aria-label="按分类筛选">
-            <option value="all">所有分类</option>
-          </select>
+          <select id="category-filter" data-label="Category">
+            <option value="all">All categories</option></select
+          ><button
+            id="manage-categories"
+            class="text-button"
+            data-t="Manage categories"
+          >
+            Manage categories
+          </button>
         </div>
-        <section
-          id="task-list"
-          aria-label="事项列表"
-          class="task-list"
-        ></section>
-        <section
-          id="template-list"
-          aria-label="快捷模板"
-          class="template-list"
-          hidden
-        ></section>
+        <section id="task-list" class="task-list"></section>
+        <section id="template-list" class="template-list" hidden></section>
         <footer class="composer-wrap">
           <form id="quick-form" autocomplete="off">
             <div class="quick-input-row">
-              <span class="input-plus" data-icon="plus"></span
-              ><input
+              <input
                 id="quick-title"
                 maxlength="240"
-                placeholder="添加事项…"
-                aria-label="新增事项"
+                data-placeholder="Add a task…"
+                data-label="Add task"
+                placeholder="Add a task…"
                 required
               /><button
                 id="quick-submit"
                 class="add-button"
                 type="submit"
-                title="添加事项"
-                aria-label="添加事项"
-                data-icon="arrow"
+                data-title="Add task"
+                data-icon="plus"
               ></button>
             </div>
             <div class="composer-options">
-              <select id="quick-category" aria-label="新增事项的分类"></select
+              <select id="quick-category" data-label="Category"></select
               ><button id="schedule-button" type="button">
-                <span data-icon="clock"></span> 日期 / 时长</button
-              ><span class="enter-hint">Enter 添加</span>
+                <span data-icon="clock"></span
+                ><span data-t="Date / time">Date / time</span></button
+              ><span class="enter-hint" data-t="Enter to add"
+                >Enter to add</span
+              >
             </div>
           </form>
           <button id="new-template" class="new-template" hidden>
-            <span data-icon="plus"></span> 创建快捷模板
+            <span data-icon="plus"></span
+            ><span data-t="New template">New template</span>
           </button>
         </footer>
         <div class="panel-footnote">
-          <span class="local-dot"></span>保存在这台电脑<span
-            >Ctrl / ⌘ + Shift + Space</span
-          >
+          <span data-t="Saved locally">Saved locally</span
+          ><span>Ctrl / ⌘ + Shift + Space</span>
         </div>
       </main>
       <div id="orb-row">
-        <span id="orb-caption" hidden>YOUR DAY, A LITTLE LIGHTER</span
-        ><button
-          id="orb"
-          title="停留展开 · 拖动移动 · 右键菜单"
-          aria-label="展开 Pebble"
-        >
-          <svg viewBox="0 0 48 48" aria-hidden="true">
-            <path d="M15 31V18c0-5 4-8 9-8s10 4 10 10-4 10-10 10h-4" />
-            <circle cx="24" cy="20" r="3" /></svg
+        <button id="orb" aria-label="Open Pebble">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 7 2 2 4-4M13 8h5M6 15h12M6 19h8" /></svg
           ><span id="orb-count" hidden></span>
         </button>
       </div>
@@ -145,76 +135,93 @@
     <dialog id="task-dialog">
       <form id="task-form" class="dialog-form" autocomplete="off">
         <div class="dialog-heading">
-          <div>
-            <span class="eyebrow">MAKE A LITTLE ROOM</span>
-            <h2 id="task-dialog-title">添加事项</h2>
-          </div>
+          <h2 id="task-dialog-title">Add task</h2>
           <button
             type="button"
             class="icon-button dialog-close"
-            aria-label="关闭"
+            data-title="Close"
             data-icon="close"
           ></button>
         </div>
         <label
-          >事项名称<input
+          ><span data-t="Task name">Task name</span
+          ><input
             id="task-title"
             required
             maxlength="240"
-            placeholder="例如：修改 CV / Go swimming"
+            data-placeholder="e.g. Review CV"
             autofocus
         /></label>
         <div class="field-pair">
           <label
-            >状态<select id="task-status">
-              <option value="todo">To-do · 待办</option>
-              <option value="doing">Doing · 进行中</option>
-              <option value="done">Done · 已完成</option>
+            ><span data-t="Status">Status</span
+            ><select id="task-status">
+              <option value="todo" data-t="To-do">To-do</option>
+              <option value="doing" data-t="Doing">Doing</option>
+              <option value="done" data-t="Done">Done</option>
             </select></label
-          ><label>分类<select id="task-category"></select></label>
+          ><label
+            ><span data-t="Category">Category</span
+            ><select id="task-category"></select
+          ></label>
         </div>
         <label
-          >安排日期
+          ><span data-t="Date">Date</span>
           <div class="date-field">
-            <input id="task-date" type="date" aria-label="任务日期" /><button
+            <input id="task-date" type="date" data-label="Date" /><button
               type="button"
               id="today-button"
               class="text-button"
+              data-t="Today"
             >
-              今天</button
-            ><button type="button" id="clear-date" class="text-button">
-              清除
+              Today</button
+            ><button
+              type="button"
+              id="clear-date"
+              class="text-button"
+              data-t="Clear"
+            >
+              Clear
             </button>
           </div></label
         >
         <fieldset>
-          <legend>时间设置 <span>可选</span></legend>
+          <legend>
+            <span data-t="Time">Time</span
+            ><span class="optional" data-t="Optional">Optional</span>
+          </legend>
           <div class="time-modes">
             <label
               ><input type="radio" name="time-mode" value="none" checked /><span
-                >不设时间</span
+                data-t="None"
+                >None</span
               ></label
             ><label
               ><input type="radio" name="time-mode" value="duration" /><span
-                >预计时长</span
+                data-t="Duration"
+                >Duration</span
               ></label
             ><label
               ><input type="radio" name="time-mode" value="range" /><span
-                >时间段</span
+                data-t="Time range"
+                >Time range</span
               ></label
             >
           </div>
           <div id="range-fields" class="field-pair" hidden>
             <label
-              >开始<input id="time-start" type="time" value="09:00" /></label
+              ><span data-t="Start">Start</span
+              ><input id="time-start" type="time" value="09:00" /></label
             ><label
-              >结束<input id="time-end" type="time" value="10:00"
+              ><span data-t="End">End</span
+              ><input id="time-end" type="time" value="10:00"
             /></label>
           </div>
           <div id="duration-fields" hidden>
             <div class="field-pair">
               <label
-                >小时<input
+                ><span data-t="Hours">Hours</span
+                ><input
                   id="time-hours"
                   type="number"
                   min="0"
@@ -222,7 +229,8 @@
                   step="1"
                   value="0" /></label
               ><label
-                >分钟<input
+                ><span data-t="Minutes">Minutes</span
+                ><input
                   id="time-minutes"
                   type="number"
                   min="0"
@@ -232,143 +240,191 @@
               /></label>
             </div>
             <div class="duration-presets">
-              <button type="button" data-duration="15">15 分钟</button
-              ><button type="button" data-duration="30">30 分钟</button
-              ><button type="button" data-duration="60">1 小时</button
-              ><button type="button" data-duration="90">1.5 小时</button>
+              <button type="button" data-duration="15">15 min</button
+              ><button type="button" data-duration="30">30 min</button
+              ><button type="button" data-duration="60">1 hr</button
+              ><button type="button" data-duration="90">1.5 hr</button>
             </div>
           </div>
           <div id="calculate-end" hidden>
-            <button id="calculate-toggle" type="button" class="text-button">
-              按时长推算结束时间
+            <button
+              id="calculate-toggle"
+              type="button"
+              class="text-button"
+              data-t="Calculate end from duration"
+            >
+              Calculate end from duration
             </button>
-            <div id="calculate-fields" hidden>
-              <div class="inline-calc">
-                <input
-                  id="calc-hours"
-                  type="number"
-                  min="0"
-                  max="23"
-                  value="1"
-                  aria-label="推算小时"
-                />小时<input
-                  id="calc-minutes"
-                  type="number"
-                  min="0"
-                  max="59"
-                  value="0"
-                  aria-label="推算分钟"
-                />分钟<button
-                  id="apply-duration"
-                  type="button"
-                  class="text-button"
-                >
-                  计算
-                </button>
-              </div>
+            <div id="calculate-fields" class="inline-calc" hidden>
+              <input
+                id="calc-hours"
+                type="number"
+                min="0"
+                max="23"
+                value="1"
+                data-label="Hours"
+              /><span data-t="Hours">Hours</span
+              ><input
+                id="calc-minutes"
+                type="number"
+                min="0"
+                max="59"
+                value="0"
+                data-label="Minutes"
+              /><span data-t="Minutes">Minutes</span
+              ><button
+                id="apply-duration"
+                type="button"
+                class="text-button"
+                data-t="Calculate"
+              >
+                Calculate
+              </button>
             </div>
           </div>
-          <p id="time-preview" class="time-preview" aria-live="polite">
-            未设置时间，可稍后编辑。
-          </p>
+          <p id="time-preview" class="time-preview" aria-live="polite"></p>
         </fieldset>
         <p id="task-error" class="form-error" role="alert"></p>
         <button type="submit" class="primary-button" id="save-task">
-          添加到 To-do
+          Add to To-do
         </button>
       </form>
     </dialog>
     <dialog id="settings-dialog">
       <div class="dialog-form settings-form">
         <div class="dialog-heading">
-          <div>
-            <span class="eyebrow">A SPACE THAT FEELS LIKE YOU</span>
-            <h2>偏好设置</h2>
-          </div>
+          <h2 data-t="Settings">Settings</h2>
           <button
             class="icon-button dialog-close"
-            aria-label="关闭"
+            data-title="Close"
             data-icon="close"
           ></button>
         </div>
+        <label
+          ><span data-t="Language">Language</span
+          ><select id="ui-language">
+            <option value="en">English</option>
+            <option value="zh">简体中文</option>
+          </select></label
+        >
         <div class="setting-row">
-          <div>
-            <strong>文字颜色</strong>
-            <p>设置事项文字的显示颜色</p>
-          </div>
-          <input id="text-color" type="color" aria-label="文字颜色" />
+          <span data-t="Text color">Text color</span
+          ><input id="text-color" type="color" data-label="Text color" />
         </div>
         <label class="opacity-label"
-          >面板不透明度 <span id="opacity-value"></span
+          ><span data-t="Panel opacity">Panel opacity</span
+          ><span id="opacity-value"></span
           ><input id="opacity" type="range" min="70" max="100" step="1"
         /></label>
-        <div class="section-label">我的分类<span>最多 100 个</span></div>
+        <div class="setting-row">
+          <span data-t="Categories">Categories</span
+          ><button
+            id="settings-categories"
+            class="text-button"
+            data-t="Manage categories"
+          >
+            Manage categories
+          </button>
+        </div>
+        <div class="section-label" data-t="Backup">Backup</div>
+        <div class="backup-actions">
+          <button id="export-data" data-t="Export backup">Export backup</button
+          ><button id="import-data" data-t="Import backup">
+            Import backup
+          </button>
+        </div>
+        <p
+          class="settings-note"
+          data-t="Drag the orb to move. Right-click it to quit."
+        >
+          Drag the orb to move. Right-click it to quit.
+        </p>
+        <div class="about">Pebble <small>0.2.0</small></div>
+      </div>
+    </dialog>
+    <dialog id="category-dialog">
+      <div class="dialog-form">
+        <div class="dialog-heading">
+          <h2 data-t="Categories">Categories</h2>
+          <button
+            class="icon-button dialog-close"
+            data-title="Close"
+            data-icon="close"
+          ></button>
+        </div>
+        <p
+          class="dialog-description"
+          data-t="Edit names and colors below. Changes save when you leave the field."
+        >
+          Edit names and colors below. Changes save when you leave the field.
+        </p>
         <div id="category-manager"></div>
         <form id="category-form" class="inline-form">
           <input
             id="category-name"
-            placeholder="新增分类，例如：创作"
+            data-placeholder="New category name"
+            data-label="Category name"
             maxlength="30"
-            aria-label="分类名称"
             required
           /><input
             id="category-color"
             type="color"
-            value="#8c94d9"
-            aria-label="分类颜色"
-          /><button class="small-button" type="submit">添加</button>
+            value="#6b7280"
+            data-label="Color"
+          /><button class="small-button" type="submit" data-t="Add category">
+            Add category
+          </button>
         </form>
-        <div class="section-label">数据备份<span>仅存本地，不上传</span></div>
-        <div class="backup-actions">
-          <button id="export-data">导出备份</button
-          ><button id="import-data">导入备份</button>
-        </div>
-        <p class="settings-note">
-          拖动小球可以移动位置。右键小球可以退出。<br />AI
-          连接将在后续版本接入。
+        <p
+          class="dialog-description"
+          data-t="Tasks and templates are kept when a category is deleted."
+        >
+          Tasks and templates are kept when a category is deleted.
         </p>
-        <div class="about">
-          pebble<span>.</span> <small>v0.1.0 · made for a lighter day</small>
-        </div>
       </div>
     </dialog>
     <dialog id="template-dialog">
       <form id="template-form" class="dialog-form">
         <div class="dialog-heading">
-          <div>
-            <span class="eyebrow">YOUR SMALL ROUTINES</span>
-            <h2>创建快捷模板</h2>
-          </div>
+          <h2 data-t="New template">New template</h2>
           <button
             type="button"
             class="icon-button dialog-close"
-            aria-label="关闭"
+            data-title="Close"
             data-icon="close"
           ></button>
         </div>
         <label
-          >事项名称<input
+          ><span data-t="Template name">Template name</span
+          ><input
             id="template-title"
             required
             maxlength="240"
-            placeholder="例如：散步 / Practice English" /></label
-        ><label>分类<select id="template-category"></select></label
+            data-placeholder="e.g. Go for a walk" /></label
         ><label
-          >预计时长（分钟，可留空）<input
+          ><span data-t="Category">Category</span
+          ><select id="template-category"></select></label
+        ><label
+          ><span data-t="Duration in minutes (optional)"
+            >Duration in minutes (optional)</span
+          ><input
             id="template-duration"
             type="number"
             min="1"
             max="10080"
             step="1"
-            placeholder="例如：30"
+            placeholder="30"
         /></label>
         <p id="template-error" class="form-error" role="alert"></p>
-        <button class="primary-button" type="submit">保存模板</button>
+        <button class="primary-button" type="submit" data-t="Save template">
+          Save template
+        </button>
       </form>
     </dialog>
     <div id="toast" role="status" hidden>
-      <span id="toast-message"></span><button id="undo" hidden>撤销</button
-      ><button id="dismiss-toast" aria-label="关闭提示">×</button>
+      <span id="toast-message"></span
+      ><button id="undo" hidden data-t="Undo">Undo</button
+      ><button id="dismiss-toast" data-label="Close">×</button>
     </div>
   </body>
 </html>
