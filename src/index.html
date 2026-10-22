@@ -11,7 +11,10 @@
     <link rel="stylesheet" href="ui.css" />
     <script defer src="domain.js"></script>
     <script defer src="i18n.js"></script>
+    <script defer src="commands.js"></script>
+    <script defer src="category-picker.js"></script>
     <script defer src="ui.js"></script>
+    <script defer src="voice-ui.js"></script>
   </head>
   <body>
     <div id="widget">
@@ -100,7 +103,7 @@
                 data-label="Add task"
                 placeholder="Add a task…"
                 required
-              /><button
+              /><button id="voice-button" class="icon-button" type="button" data-title="Voice input" data-icon="mic"></button><button
                 id="quick-submit"
                 class="add-button"
                 type="submit"
@@ -205,11 +208,12 @@
               ></label
             >
           </div>
+          <label class="start-mode"><input type="radio" name="time-mode" value="start" /><span data-t="Start time only">Start time only</span></label>
           <div id="range-fields" class="field-pair" hidden>
             <label
               ><span data-t="Start">Start</span
               ><input id="time-start" type="time" value="09:00" /></label
-            ><label
+            ><label id="end-time-label"
               ><span data-t="End">End</span
               ><input id="time-end" type="time" value="10:00"
             /></label>
@@ -346,7 +350,7 @@
         >
           Drag the orb to move. Right-click it to quit.
         </p>
-        <div class="about">Pebble <small>0.5.0</small></div>
+        <div class="about">Pebble <small>0.6.1</small></div>
       </div>
     </dialog>
     <dialog id="ai-dialog">
@@ -365,6 +369,14 @@
             >Allow AI apps to read and add tasks</span
           ></label
         >
+        <div class="section-label" data-t="Option 1 · Skill">Option 1 · Skill</div>
+        <p class="dialog-description" data-t="For local Codex and Claude Code. Install once; no MCP configuration or extra Node.js is needed. Keep Pebble running with AI access on.">For local Codex and Claude Code. Install once; no MCP configuration or extra Node.js is needed. Keep Pebble running with AI access on.</p>
+        <div class="backup-actions">
+          <button id="install-codex-skill" data-t="Install Codex Skill">Install Codex Skill</button>
+          <button id="install-claude-skill" data-t="Install Claude Code Skill">Install Claude Code Skill</button>
+        </div>
+        <p id="skill-install-status" class="dialog-description" role="status"></p>
+        <div class="section-label" data-t="Option 2 · MCP">Option 2 · MCP</div>
         <p
           class="dialog-description"
           data-t="Connect Codex or Claude using the configuration below. Keep Pebble running while using AI."
@@ -408,11 +420,12 @@
         </div>
         <p
           class="dialog-description"
-          data-t="Edit names and colors below. Changes save when you leave the field."
+          data-t="Colors label categories here and in category options. The main list keeps its simple text color. Changes save automatically."
         >
-          Edit names and colors below. Changes save when you leave the field.
+          Colors label categories here and in category options. The main list keeps its simple text color. Changes save automatically.
         </p>
         <div id="category-manager"></div>
+        <p class="dialog-description" data-t="Choose a preset or any custom color. Add an emoji after each category name.">Choose a preset or any custom color. Add an emoji after each category name.</p>
         <p
           class="dialog-description"
           data-t="Common category names translate automatically. Add your own translations for other names."
@@ -427,7 +440,7 @@
             data-label="Category name"
             maxlength="30"
             required
-          /><input
+          /><input id="category-emoji" class="emoji-input" maxlength="24" data-label="Emoji" placeholder="☺" /><input
             id="category-color"
             type="color"
             value="#6b7280"
@@ -436,6 +449,7 @@
             Add category
           </button>
         </form>
+        <div id="new-category-colors" class="color-palette"></div>
         <p
           class="dialog-description"
           data-t="Tasks and templates are kept when a category is deleted."
@@ -481,6 +495,21 @@
           Save template
         </button>
       </form>
+    </dialog>
+    <dialog id="voice-dialog">
+      <div class="dialog-form">
+        <div class="dialog-heading"><h2 data-t="Voice input">Voice input</h2><button class="icon-button dialog-close" data-title="Close" data-icon="close"></button></div>
+        <p class="dialog-description" data-t="Free local speech recognition. First use downloads a multilingual model (about 250 MB). Audio stays on this computer.">Free local speech recognition. First use downloads a multilingual model (about 250 MB). Audio stays on this computer.</p>
+        <select id="voice-language" data-label="Speech language"><option value="zh">中文</option><option value="en">English</option></select>
+        <button id="voice-record" class="primary-button" data-t="Start recording">Start recording</button>
+        <p id="voice-status" class="dialog-description" role="status" aria-live="polite"></p>
+        <label><span data-t="Transcript / command">Transcript / command</span><textarea id="voice-transcript" rows="3" maxlength="500" data-placeholder="e.g. Meeting tomorrow at 3 pm / I finished swimming"></textarea></label>
+        <label><span data-t="Action">Action</span><select id="voice-action"><option value="auto" data-t="Detect automatically">Detect automatically</option><option value="add" data-t="Add a new task">Add a new task</option><option value="todo" data-t="Move to To-do">Move to To-do</option><option value="doing" data-t="Move to Doing">Move to Doing</option><option value="done" data-t="Move to Done">Move to Done</option></select></label>
+        <p class="dialog-description" data-t="Add, start, complete or reopen a task from any tab. You can correct the action above. Review before applying.">Add, start, complete or reopen a task from any tab. You can correct the action above. Review before applying.</p>
+        <button id="voice-review" class="text-button" data-t="Review command">Review command</button>
+        <div id="voice-preview" aria-live="polite"></div>
+        <button id="voice-apply" class="primary-button" hidden data-t="Apply">Apply</button>
+      </div>
     </dialog>
     <div id="toast" role="status" hidden>
       <span id="toast-message"></span

@@ -2,11 +2,13 @@
 
 # Pebble
 
-A transparent floating to-do list for **Windows and macOS**, with local **MCP tools for Codex and Claude**.
+A transparent floating to-do list for **Windows and macOS**, with local **voice input, Skills and MCP tools for Codex and Claude**.
 
-[中文说明](README.zh-CN.md) · [Download v0.5.0](https://github.com/chenwy777/pebble-todo/releases/tag/v0.5.0) · [Installation](#installation) · [AI connections](#connect-codex-or-claude) · [Changelog](CHANGELOG.md)
+[中文说明](README.zh-CN.md) · [Download v0.6.1](https://github.com/chenwy777/pebble-todo/releases/tag/v0.6.1) · [Installation](#installation) · [AI connections](#connect-codex-or-claude) · [Changelog](CHANGELOG.md)
 
 Pebble stays on your desktop as a small glass orb. Hover to unfold the list downward, add a task, and return to what you were doing. Your tasks are stored on your computer; no Pebble account is required.
+
+**New in 0.6.1:** free local Chinese / English voice input, commands to add / complete / start / reopen tasks across tabs, one-click Codex / Claude Code Skill installation, and category emoji with a 12-color palette. The main list keeps its neutral text. [Release notes](docs/releases/v0.6.1.md) · [Voice guide](docs/voice.md).
 
 <p align="center"><img src="docs/demos/quick-start.gif" width="480" alt="Real Pebble recording: hover to unfold, add tasks, highlight a row, move it through Doing and Done, and collapse to the remaining-task counter."></p>
 
@@ -20,37 +22,38 @@ _Actual Electron app interaction using disposable demo data. The neutral backdro
 | Remaining-task counter | Shows the P logo when To-do is empty, otherwise the full To-do count. Doing and Done are excluded.           |
 | Three task states      | Add tasks directly to To-do, Doing or Done. Click a task's checkbox to advance its state.                    |
 | Hover focus            | The hovered row lifts slightly while other rows fade and shrink. Reduced-motion preferences are respected.   |
-| Custom categories      | Add, rename, recolor and filter categories; category groups can be collapsed.                                |
-| Planned time           | Optional date, duration, or start/end time. Pebble calculates hours and minutes and labels overnight ranges. |
+| Custom categories      | Custom names, emoji, 12 preset colors and custom colors; the main list remains neutral.                                |
+| Planned time           | Optional date, duration, start time, or start/end time. Pebble calculates hours and minutes and labels overnight ranges. |
 | Quick templates        | Reuse built-in activities or create your own templates, then choose the destination state.                   |
 | English / Chinese      | English by default; switch the interface with 中文 / EN. Click the date to switch its language separately.   |
+| Local voice            | Chinese / English transcription on your computer; review commands before adding or moving tasks. |
 | Local data             | Automatic local saves, previous-write backup, JSON import/export and undo for recent manual changes.         |
-| Optional AI tools      | Read tasks/categories and add tasks through a local MCP connection.                                          |
+| Optional AI tools      | Install a local Codex / Claude Code Skill, or use the existing MCP connection to read / add tasks.                                          |
 
 ## Installation
 
 ### Choose your download
 
-Open the [v0.5.0 release](https://github.com/chenwy777/pebble-todo/releases/tag/v0.5.0) and expand **Assets** if needed. Download the installer matching your computer; the GitHub **Source code** archives are for developers.
+Open the [v0.6.1 release](https://github.com/chenwy777/pebble-todo/releases/tag/v0.6.1) and expand **Assets** if needed. Download the installer matching your computer; the GitHub **Source code** archives are for developers.
 
 | Your computer                   | Recommended download                                                                                                | ZIP alternative                                                                                                     |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Windows x64                     | [Windows installer](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-windows-x64.exe) | [Windows ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-windows-x64.zip)       |
-| Mac with an Apple M-series chip | [Apple Silicon DMG](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-arm64.dmg) | [Apple Silicon ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-arm64.zip) |
-| Mac with an Intel processor     | [Intel DMG](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-x64.dmg)           | [Intel ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-x64.zip)           |
+| Windows x64                     | [Windows installer](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-windows-x64.exe) | [Windows ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-windows-x64.zip)       |
+| Mac with an Apple M-series chip | [Apple Silicon DMG](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-macos-arm64.dmg) | [Apple Silicon ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-macos-arm64.zip) |
+| Mac with an Intel processor     | [Intel DMG](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-macos-x64.dmg)           | [Intel ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-macos-x64.zip)           |
 
-**Node.js is not required to use the desktop app.** It is needed only for optional AI connections or development.
+**Node.js is not required to use the desktop app.** The MCP setup below requires Node.js; the one-click Skill installer reuses Pebble's own runtime.
 
 ### Windows
 
 1. If an older Pebble is running, right-click its orb and choose **Quit Pebble**.
-2. Download and run `Pebble-0.5.0-windows-x64.exe` from this repository's release.
+2. Download and run `Pebble-0.6.1-windows-x64.exe` from this repository's release.
 3. Choose the installation folder and finish the installer.
 4. Open **Pebble** from the Start menu or desktop shortcut. Look for the floating orb; Pebble does not use a normal taskbar window.
 
 For the ZIP version, choose **Extract All**, keep the entire extracted folder together, and run `Pebble.exe` inside it. Copying only the `.exe` will leave behind required resources. Windows 11 x64 is the local validation environment; other Windows configurations are not yet individually verified.
 
-These preview installers do not have a publisher certificate, so Windows may show an unrecognized-publisher warning. Verify the repository and file before deciding whether to run it. Asset hashes are published in `SHA256SUMS.txt`; PowerShell can calculate one with `Get-FileHash -Algorithm SHA256 .\Pebble-0.5.0-windows-x64.exe`.
+These preview installers do not have a publisher certificate, so Windows may show an unrecognized-publisher warning. Verify the repository and file before deciding whether to run it. Asset hashes are published in `SHA256SUMS.txt`; PowerShell can calculate one with `Get-FileHash -Algorithm SHA256 .\Pebble-0.6.1-windows-x64.exe`.
 
 ### macOS
 
@@ -65,7 +68,7 @@ Mac installers are produced by separate Apple Silicon and Intel CI jobs. Packagi
 
 ### Update or uninstall
 
-Export a JSON backup in **Settings → Export backup** before upgrading. Quit the old version, then install or open the new one. Data is stored separately from the application and should load automatically. If you move or reinstall Pebble, copy its AI configuration again so the MCP path points to the new location.
+Export a JSON backup in **Settings → Export backup** before upgrading. Quit the old version, then install or open the new one. Data is stored separately from the application and should load automatically. If you move or reinstall Pebble, reinstall its Skill or copy its MCP configuration again so the launcher points to the new location.
 
 Uninstall the Windows application normally, or remove `Pebble.app` on macOS. ZIP users can remove the extracted application folder after quitting. Removing the app does not require deleting your separate task-data folder.
 
@@ -93,6 +96,20 @@ Common category names have a local English/Chinese lookup (`life` → 生活, `w
 
 <p align="center"><img src="docs/demos/categories-language.gif" width="480" alt="Real recording: create a custom category, give it a Chinese name, add a task, and switch the interface and date languages."></p>
 
+Category colors and emoji appear in the manager and **open category options only**. Closed selectors, headings and task text keep the same neutral color. Choose a preset or any custom color; emoji are optional.
+
+### Voice input and task commands
+
+Click the microphone beside task entry, choose Chinese or English and start recording. First use downloads a free local speech model (about **250 MB**); after caching, recognition works offline. Audio stays in memory on your computer. Allow microphone access when asked. Intel Macs use a slower WASM fallback.
+
+Review the transcript, click **Review command**, check the action and target task, then **Apply**. You can also type the command directly. `Complete the meeting` moves a matching task to Done even if you opened the dialog from To-do. `Start the meeting` moves it to Doing; `Reopen the meeting` moves it to To-do. Multiple matches require a choice; missing matches are not inserted as new tasks. The Action selector lets you correct the intent.
+
+This is a limited local command parser, not a general AI model. Check recognition and the preview before applying. See [supported commands, download and privacy details](docs/voice.md).
+
+<p align="center"><img src="docs/demos/voice-actions.gif" width="480" alt="Actual app: type Complete the meeting, review Move to Done, apply it, then start the same task from another tab."></p>
+
+_This recording types commands to demonstrate transcript review and task actions; it does not demonstrate microphone recognition._
+
 ### Time ranges and AI additions
 
 A range such as **19:00 → 20:30** displays **1h 30m**. A range ending earlier than it starts crosses midnight; equal start and end times are invalid. Use Duration for a plan longer than a day.
@@ -102,6 +119,16 @@ The second half of this recording performs a real `pebble_add_task` MCP call aga
 <p align="center"><img src="docs/demos/time-and-ai.gif" width="480" alt="Real recording: set a 19:00–20:30 range, save the task, add a second task through MCP, and watch the orb and list update."></p>
 
 ## Connect Codex or Claude
+
+### Option 1: Skill (one-click installation)
+
+In **Settings → AI connections**, choose **Install Codex Skill** or **Install Claude Code Skill**, enable AI access, then restart the client or open a new chat. Invoke `$pebble-todo` in Codex or `/pebble-todo` in local Claude Code. There is no MCP configuration to copy and no separate Node installation for this route. It supports the same four read / add operations as MCP; existing task editing/completion is not included. This local Skill requires access to the same computer, not an isolated cloud chat.
+
+The original MCP route remains available. Use it for compatible clients, including Claude Desktop, or when you prefer registered tools. See [both setup options](docs/ai.md). Neither installation route overwrites the other one's configuration.
+
+<p align="center"><img src="docs/demos/ai-options.gif" width="480" alt="Actual AI settings: optional Codex and Claude Code Skill installation, with the original MCP setup still available."></p>
+
+### Option 2: MCP (existing setup)
 
 Pebble exposes an MCP server that a compatible AI client can start locally. The AI client interprets your request; Pebble validates and saves the task. Pebble itself does not need a model API key.
 
@@ -141,7 +168,7 @@ References: [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli), 
 
 The previous valid write is retained as `tasks.json.backup`. If the main file is damaged, Pebble attempts to restore that backup and keeps the damaged original. Use **Settings → Export backup** for a separate copy; importing a backup replaces the current list after confirmation.
 
-The app does not send telemetry or load external page resources. Task data is not encrypted; it uses your OS account's file permissions. When AI access is enabled, its temporary discovery file is under the data folder's `ai/connection.json`; do not share that file. Configuration copied for an AI client does not contain the connection token.
+The app does not send telemetry or load external page resources. Optional voice setup downloads model files from Hugging Face; subsequent speech recognition runs locally using the cached model. Models are stored in `voice-models/` inside the app data folder, separately from task backups. Task data is not encrypted; it uses your OS account's file permissions. When AI access is enabled, its temporary discovery file is under the data folder's `ai/connection.json`; do not share that file. Configuration copied for an AI client does not contain the connection token.
 
 ## Troubleshooting
 
@@ -175,6 +202,9 @@ npm test               # Data, time, storage, layout and local AI bridge checks
 npm run build:mcp      # Bundle the independent Node MCP bridge
 npm run test:desktop   # Electron interaction regression
 npm run test:mcp       # MCP ↔ running Electron integration
+npm run test:features  # Category colors / emoji and voice preview
+npm run test:voice-actions # Cross-tab command interpretation
+npm run test:skill     # Isolated Skill installation and live operations
 npm run pack           # Unpacked app for the current OS
 npm run dist:win       # Windows installer + ZIP, on Windows
 npm run dist:mac       # DMG + ZIP, on macOS
@@ -197,6 +227,7 @@ The recorder drives the real Electron app and a real local MCP client using isol
 electron/   Native window, storage, shared task service and private local bridge
 src/        Interface, styling, translations and shared data validation
 mcp/        Stdio MCP server, bundle and configuration generation
+skills/     Optional Pebble Skill and local operation helper
 tests/      Unit, desktop and MCP integration checks
 scripts/    Real interaction recording, GIF encoding and asset checksums
 docs/       Demos, AI setup, validation/design context and release notes
@@ -204,4 +235,4 @@ docs/       Demos, AI setup, validation/design context and release notes
 
 ## Current scope
 
-Pebble 0.5 is a desktop preview. It does not yet include cloud sync, reminder notifications, recurring tasks, automatic startup, actual time tracking or MCP editing/deletion. These limits are also listed in the release notes; planned duration is not a timer or an alarm.
+Pebble 0.6.1 is a desktop preview. It does not yet include cloud sync, reminder notifications, recurring tasks, automatic startup, actual time tracking or MCP editing/deletion. These limits are also listed in the release notes; planned duration is not a timer or an alarm.

@@ -2,11 +2,13 @@
 
 # Pebble · 悬浮待办
 
-适用于 **Windows 和 macOS** 的透明悬浮待办小球，提供供 **Codex、Claude** 调用的本地 MCP 工具。
+适用于 **Windows 和 macOS** 的透明悬浮待办小球，支持本地语音，以及供 **Codex、Claude** 使用的 Skill 与 MCP 工具。
 
-[English](README.md) · [下载 v0.5.0](https://github.com/chenwy777/pebble-todo/releases/tag/v0.5.0) · [安装说明](#安装) · [AI 连接](#连接-codex-或-claude) · [更新记录](CHANGELOG.md)
+[English](README.md) · [下载 v0.6.1](https://github.com/chenwy777/pebble-todo/releases/tag/v0.6.1) · [安装说明](#安装) · [AI 连接](#连接-codex-或-claude) · [更新记录](CHANGELOG.md)
 
 平时是一个清透小球，鼠标移上去后向下展开列表。添加、查看、分类和切换状态都在小面板里完成。事项保存在自己的电脑上，不需要注册 Pebble 账号。
+
+**0.6.1 新功能：** 免费的本地中英文语音输入，跨标签添加／完成／开始／重新打开事项，一键安装 Codex／Claude Code Skill，以及分类 emoji、12 种常用颜色和自定义取色。主页仍保持统一中性色。[发行说明](docs/releases/v0.6.1.md) · [语音指南](docs/voice.md)。
 
 <p align="center"><img src="docs/demos/quick-start.gif" width="480" alt="实际操作：悬停展开、添加待办、事项悬停聚焦、切换进行中与完成状态，再收回到显示剩余数量的小球。"></p>
 
@@ -20,31 +22,32 @@ _动图录自实际 Electron 应用，使用独立的演示事项；外层背景
 | 待办数量提示   | To-do 为 0 时显示 P 标记；有事项时显示 To-do 数量。Doing、Done 不计入数字。 |
 | 三种状态       | To-do / Doing / Done，每种状态都可以直接添加事项。                          |
 | 悬停聚焦       | 鼠标指向的事项轻微浮起，其他事项淡出、缩小；遵循系统减少动态效果设置。      |
-| 自定义分类     | 新增、改名、改颜色、筛选，分类分组可折叠。                                  |
-| 日期与计划时长 | 可选日期、预计时长或开始 / 结束时间，自动显示小时与分钟，支持跨午夜。       |
+| 自定义分类     | 自定义名称、emoji、12 种预设颜色及自定义取色；主页保持中性色。                                  |
+| 日期与计划时长 | 可选日期、预计时长、单独开始时间或开始 / 结束时间，自动显示小时与分钟，支持跨午夜。       |
 | 快捷模板       | 使用默认活动或创建自己的模板，加入时选择目标状态。                          |
 | 中英文         | 默认英文，可切换中文；日期语言可以独立切换。                                |
+| 本地语音       | 中英文在本机转写，预览确认后添加事项或改变已有事项状态。 |
 | 本地保存与备份 | 自动保存、上一份有效数据备份、JSON 导入导出、最近手动修改撤销。             |
-| 可选 AI 接入   | 通过本地 MCP 读取事项和分类，或让 AI 添加事项。                             |
+| 可选 AI 接入   | 一键安装本机 Codex / Claude Code Skill，或通过原有 MCP 读取与添加事项。                             |
 
 ## 安装
 
 ### 先选择下载文件
 
-打开 [v0.5.0 下载页](https://github.com/chenwy777/pebble-todo/releases/tag/v0.5.0)，必要时展开 **Assets**。普通使用者下载下面的安装包；GitHub 自动提供的 **Source code** 压缩包是源码，不是安装程序。
+打开 [v0.6.1 下载页](https://github.com/chenwy777/pebble-todo/releases/tag/v0.6.1)，必要时展开 **Assets**。普通使用者下载下面的安装包；GitHub 自动提供的 **Source code** 压缩包是源码，不是安装程序。
 
 | 电脑类型               | 建议下载                                                                                                            | ZIP 备选                                                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Windows x64            | [Windows 安装程序](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-windows-x64.exe)  | [Windows ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-windows-x64.zip)       |
-| Apple M 系列芯片的 Mac | [Apple Silicon DMG](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-arm64.dmg) | [Apple Silicon ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-arm64.zip) |
-| Intel 处理器的 Mac     | [Intel DMG](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-x64.dmg)           | [Intel ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.5.0/Pebble-0.5.0-macos-x64.zip)           |
+| Windows x64            | [Windows 安装程序](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-windows-x64.exe)  | [Windows ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-windows-x64.zip)       |
+| Apple M 系列芯片的 Mac | [Apple Silicon DMG](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-macos-arm64.dmg) | [Apple Silicon ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-macos-arm64.zip) |
+| Intel 处理器的 Mac     | [Intel DMG](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-macos-x64.dmg)           | [Intel ZIP](https://github.com/chenwy777/pebble-todo/releases/download/v0.6.1/Pebble-0.6.1-macos-x64.zip)           |
 
-**只使用桌面待办不需要 Node.js。** AI 连接或源码开发才需要它。
+**只使用桌面待办不需要 Node.js。** 下方 MCP 方案需要 Node.js；Skill 一键安装方案复用 Pebble 自带运行环境，不需要额外安装。
 
 ### Windows 安装
 
 1. 如果旧版正在运行，先右键旧小球，选择 **Quit Pebble / 退出 Pebble**。
-2. 从本仓库下载 `Pebble-0.5.0-windows-x64.exe` 并运行。
+2. 从本仓库下载 `Pebble-0.6.1-windows-x64.exe` 并运行。
 3. 选择安装目录，完成安装。
 4. 从开始菜单或桌面快捷方式打开 **Pebble**，寻找桌面小球。它不会像普通软件一样显示一个任务栏主窗口。
 
@@ -53,7 +56,7 @@ _动图录自实际 Electron 应用，使用独立的演示事项；外层背景
 预览版没有发布者签名，Windows 可能提示未知发布者；请先核对仓库和文件，再决定是否运行。Release 中的 `SHA256SUMS.txt` 提供文件校验值，在 PowerShell 中可用以下命令计算并比对：
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\Pebble-0.5.0-windows-x64.exe
+Get-FileHash -Algorithm SHA256 .\Pebble-0.6.1-windows-x64.exe
 ```
 
 ### macOS 安装
@@ -69,7 +72,7 @@ Mac 安装包由 Apple Silicon 与 Intel 两个 CI 环境分别构建。构建�
 
 ### 更新与卸载
 
-更新前建议在 **设置 → 导出备份** 保存一份 JSON。退出旧版后安装或运行新版，事项数据独立于应用存放，会继续读取。移动或重新安装应用后，请重新复制 AI 配置，更新 MCP 文件所在路径。
+更新前建议在 **设置 → 导出备份** 保存一份 JSON。退出旧版后安装或运行新版，事项数据独立于应用存放，会继续读取。移动或重新安装应用后，请重新安装 Skill 或复制 MCP 配置，更新启动文件所在路径。
 
 Windows 可正常卸载应用；Mac 可移除 `Pebble.app`。ZIP 用户退出后移除解压目录即可。移除应用不要求删除独立存放的事项数据。
 
@@ -97,6 +100,20 @@ Windows 可正常卸载应用；Mac 可移除 `Pebble.app`。ZIP 用户退出后
 
 <p align="center"><img src="docs/demos/categories-language.gif" width="480" alt="实际操作：创建自定义分类、填写中文名称、添加事项、切换中文界面，并独立切换日期语言。"></p>
 
+颜色和 emoji **只显示在分类管理和展开的分类选项里**；收起的选择框、主页分类标题与事项正文统一使用中性色。分类可选 12 种预设颜色或任意自定义颜色，emoji 可留空。
+
+### 语音输入与事项指令
+
+点击输入框旁的麦克风，选择中文或英文，再开始录音。首次使用需下载约 **250 MB** 的免费本地语音模型，缓存后可离线识别。录音仅在本机内存中处理；系统询问时允许麦克风访问。Intel Mac 使用较慢的 WASM 兼容路径。
+
+检查转写文字，点击 **预览指令**，核对操作和目标事项后再 **应用**。也可以直接输入指令。即使从待办页打开，说 `Complete the meeting` 也会把匹配事项移到已完成；`Start the meeting` 移到进行中；`Reopen the meeting` 移回待办。多个匹配需要自行选择，找不到已有事项时不会误新增。操作选择器可用于纠正识别意图。
+
+当前使用范围有限的本地指令规则，并非通用 AI 理解；请检查转写和操作预览。具体支持句式、下载及隐私说明见[语音指南](docs/voice.md)。
+
+<p align="center"><img src="docs/demos/voice-actions.gif" width="480" alt="实际操作：输入 Complete the meeting，预览移到已完成并应用，再从其他标签开始同一事项。"></p>
+
+_此动图通过键入指令演示转写检查与状态操作，不代表麦克风识别演示。_
+
 ### 时间段与 AI 添加
 
 设置 **19:00 → 20:30** 后，显示 **1h 30m / 1小时30分钟**。结束时间早于开始时间时按跨午夜计算；相同起止时间会提示无效。更长的计划可以使用“预计时长”。
@@ -106,6 +123,16 @@ Windows 可正常卸载应用；Mac 可移除 `Pebble.app`。ZIP 用户退出后
 <p align="center"><img src="docs/demos/time-and-ai.gif" width="480" alt="实际操作：选择 19:00 至 20:30，查看自动计算的时长，保存后通过 MCP 添加第二个事项，观察小球和列表更新。"></p>
 
 ## 连接 Codex 或 Claude
+
+### 方案一：Skill 技能（一键安装）
+
+在 **设置 → AI 连接** 点击 **安装 Codex Skill** 或 **安装 Claude Code Skill**，开启 AI 访问，再重启客户端或新建对话。Codex 可用 `$pebble-todo`，本机 Claude Code 可用 `/pebble-todo`。无须复制 MCP 配置，也无须额外安装 Node.js。支持范围与 MCP 相同：读取日期、分类、事项，以及添加待办；暂不支持修改或完成已有事项。
+
+该 Skill 需要 AI 软件能在同一台电脑上执行命令，普通云端聊天不会因为上传 Skill 就连上本机。Claude Desktop 等客户端仍可使用原来的 MCP 方案；两种方式的配置互不覆盖。具体区别和安装方式见 [AI 连接文档](docs/ai.md)。
+
+<p align="center"><img src="docs/demos/ai-options.gif" width="480" alt="实际 AI 设置：Codex 与 Claude Code Skill 安装入口，以及保留的 MCP 配置方式。"></p>
+
+### 方案二：MCP 连接（原有方式保留）
 
 AI 软件负责理解自然语言，Pebble 负责校验并保存事项。Pebble 本身不需要模型 API Key。
 
@@ -145,7 +172,7 @@ Claude Desktop 的配置通常位于 Windows 的 `%APPDATA%/Claude/claude_deskto
 
 上一份有效写入会保留为 `tasks.json.backup`。主文件损坏时会尝试恢复备份，并保留损坏原文件。请定期使用 **设置 → 导出备份** 另存 JSON；导入会在确认后替换当前列表。
 
-应用不发送遥测，也不加载外部页面资源。事项文件没有加密，使用电脑账户权限保护。AI 连接的临时发现文件位于数据目录的 `ai/connection.json`，不要分享；复制给 AI 软件的配置不包含访问令牌。
+应用不发送遥测，也不加载外部页面资源。可选语音功能首次会从 Hugging Face 下载模型，缓存后在本机识别；模型位于应用数据目录的 `voice-models/`，不包含在事项备份中。事项文件没有加密，使用电脑账户权限保护。AI 连接的临时发现文件位于数据目录的 `ai/connection.json`，不要分享；复制给 AI 软件的配置不包含访问令牌。
 
 ## 常见问题
 
@@ -179,6 +206,9 @@ npm test               # 数据、时间、存储、布局和本地 AI 桥接测
 npm run build:mcp      # 生成独立 Node MCP 桥接文件
 npm run test:desktop   # Electron 界面回归
 npm run test:mcp       # MCP 与真实 Electron 联动回归
+npm run test:features  # 分类颜色、emoji 与语音预览
+npm run test:voice-actions # 跨标签指令与状态操作
+npm run test:skill     # 隔离环境 Skill 安装与实际联动
 npm run pack           # 当前系统可运行目录
 npm run dist:win       # 在 Windows 上生成安装程序与 ZIP
 npm run dist:mac       # 在 macOS 上生成 DMG 与 ZIP
@@ -199,4 +229,4 @@ python scripts/encode-demos.py
 
 ## 当前范围
 
-0.5 是桌面预览版，尚不包含云端同步、通知提醒、重复事项、开机启动、实际用时计时，或通过 MCP 修改 / 删除已有事项。计划时长不是计时器或闹钟。
+0.6.1 是桌面预览版，尚不包含云端同步、通知提醒、重复事项、开机启动、实际用时计时，或通过 MCP 修改 / 删除已有事项。计划时长不是计时器或闹钟。

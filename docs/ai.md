@@ -1,12 +1,29 @@
 # Pebble 与 AI 软件连接
 
-Pebble v0.5 使用本地 MCP 服务供 AI 读取和添加待办。自然语言识别由所连接的 AI 软件完成，Pebble 不需要模型 API Key。
+Pebble 提供两种可选接入方式：**Skill 技能**（0.6.1 新增）和 **MCP 连接**（0.5 已提供，继续保留）。两种方式都由运行中的 Pebble 统一读写数据，均不需要 Pebble 模型 API Key。
 
-MCP 提供实际操作工具；Skill 提供模型的使用说明，两者可以配合。本版服务本身已附带工具说明，无须为每个客户端另写一套 Skill。
+Skill 包含给 AI 的操作说明、参数参考和实际操作脚本；脚本自动读取本机连接信息，调用 Pebble 的本地服务。MCP 将同样的操作暴露为标准工具。选择一种适合客户端的方式即可，无须同时安装二者。
+
+## 方案一：安装 Skill（Codex / Claude Code 本地会话）
+
+1. 运行 Pebble 0.6，打开 **Settings → AI connections**。
+2. 点击 **Install Codex Skill** 或 **Install Claude Code Skill**。
+3. 开启 **Allow AI apps to read and add tasks**。安装 Skill 本身不会替你开启访问。
+4. 重启 AI 客户端或新建对话。在 Codex 中可用 `$pebble-todo`，Claude Code 中可用 `/pebble-todo`，也可直接说明“帮我把复习 CV 加入 Pebble 待办”。
+
+Skill 安装后不需要手工编辑 TOML / JSON，也不需要额外安装 Node.js：启动脚本复用 Pebble 自带运行环境。AI 客户端仍可按自身权限规则提示批准本地命令。使用时保持 Pebble 运行；移动应用位置后，从新位置重新安装 Skill，更新启动路径。
+
+安装目录按客户端规范选择：Codex 为 `~/.agents/skills/pebble-todo`，Claude Code 为 `~/.claude/skills/pebble-todo`。两者不会改动已有 MCP 配置。重新安装会检查 Pebble 安装标记和文件校验值，发现用户改动或同名外部 Skill 时停止，不覆盖自定义内容。要移除时只需在客户端中移除／关闭该 Skill，或删除其对应文件夹；AI 访问开关关闭后，已安装的脚本也不能继续读取或写入。
+
+该 Skill 需要 AI 客户端拥有**本机执行能力**，不能仅把 ZIP 上传到云端聊天，就自动连到你的电脑。普通 Claude Desktop 聊天请用下方 MCP 路线；Claude Code 本机会话与 Claude 网页、Cowork 虚拟机、云端任务的运行环境不同。参考 [Codex Skill 官方文档](https://learn.chatgpt.com/docs/build-skills)和 [Claude Code Skill 官方文档](https://code.claude.com/docs/en/skills)。
+
+Skill 与现有 MCP 的操作范围相同：读取上下文、分类、事项，以及添加事项；当前不通过这两个入口编辑、完成或删除已有事项。应用内语音完成属于本机界面的另一项功能。
+
+## 方案二：MCP 连接（原有方式保留）
 
 ## 第一次连接
 
-1. 安装 Node.js 20 或更新版本，并运行 Pebble v0.5。
+1. 安装 Node.js 20 或更新版本，并运行 Pebble v0.6.1。
 2. 打开 Pebble 的 Settings → AI connections（设置 → AI 连接），开启“允许 AI 软件读取和添加事项”。
 3. 复制对应的 Codex 或 Claude 配置，按下面的说明加入 AI 软件。
 4. 重启 AI 客户端以加载配置。使用时保持 Pebble 运行，关闭连接开关即可停止 AI 访问。

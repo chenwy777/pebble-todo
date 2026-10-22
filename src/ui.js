@@ -12,6 +12,7 @@ const icons = {
   clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/>',
   check: '<path d="m5 12 4 4L19 6"/>',
   play: '<path d="m9 6 8 6-8 6V6Z"/>',
+  mic: '<rect x="9" y="3" width="6" height="12" rx="3"/><path d="M6 10v2a6 6 0 0 0 12 0v-2M12 18v3M9 21h6"/>',
 };
 const svg = (name) =>
   `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[name] || icons.plus}</svg>`;
@@ -43,10 +44,13 @@ const t = (key, values) => I.t(language(), key, values);
 const errorText = (error) => I.error(language(), error.message || error);
 const duration = (minutes) => D.formatDuration(minutes, language());
 const categoryName = (category) => I.categoryName(language(), category);
+const categoryLabel = (category) => categoryName(category) + (category.emoji ? " " + category.emoji : "");
+const categoryColors = ["#a8793c", "#d5a76b", "#b55454", "#ca7b91", "#9966aa", "#7972b2", "#487bb5", "#448c9b", "#43836a", "#7aa995", "#83904b", "#6b7280"];
+const palette = (categoryId, selected) => categoryColors.map((color) => `<button type="button" class="color-swatch" style="--swatch:${color}" data-palette-category="${esc(categoryId)}" data-color="${color}" aria-label="${esc(t("Color"))} ${color}" aria-pressed="${color.toLowerCase() === selected.toLowerCase()}"></button>`).join("");
 const templateName = (template) =>
   template.builtinKey ? t(template.builtinKey) : template.title;
 const dialogs = [...document.querySelectorAll("dialog")];
-const anyDialog = () => dialogs.some((d) => d.open);
+const anyDialog = () => dialogs.some((d) => d.open) || Boolean(document.querySelector("#category-popover:popover-open"));
 const collapsedGroups = new Set();
 
 function translateStatic() {
@@ -128,17 +132,18 @@ function fillSelect(id, selected, all = false) {
     `<option value="${all ? "all" : ""}">${esc(t(all ? "All categories" : "Uncategorized"))}</option>` +
     state.categories
       .map(
-        (c) => `<option value="${esc(c.id)}">${esc(categoryName(c))}</option>`,
+        (c) => `<option value="${esc(c.id)}" style="color:${c.color}">${esc(categoryLabel(c))}</option>`,
       )
       .join("") +
     (!all ? `<option value="__new">${esc(t("+ New category…"))}</option>` : "");
   select.value = selected;
   if (select.selectedIndex < 0) select.value = all ? "all" : "";
+  syncCategoryPicker(select);
 }
 function categoryTag(id) {
   const c = state.categories.find((c) => c.id === id);
   return c
-    ? `<span class="category-tag" style="--category-color:${c.color}"><i></i>${esc(categoryName(c))}</span>`
+    ? `<span class="category-tag"><i></i>${esc(categoryName(c))}</span>`
     : "";
 }
 function dateLabel(value) {
@@ -159,6 +164,7 @@ function dateLabel(value) {
 function scheduleLabel(task) {
   const parts = [];
   if (task.date) parts.push(dateLabel(task.date));
+  if (task.time.mode === "start") parts.push(task.time.start);
   if (task.time.mode === "duration")
     parts.push(
       t("Estimated {duration}", {
@@ -275,6 +281,7 @@ function renderTasks() {
     ...state.categories.map((category) => ({
       id: category.id,
       name: categoryName(category),
+      color: category.color,
     })),
     { id: "", name: t("Uncategorized") },
   ];
@@ -283,7 +290,7 @@ function renderTasks() {
       const items = list.filter((task) => task.categoryId === group.id);
       if (!items.length) return "";
       const collapsed = collapsedGroups.has(group.id);
-      return `<section class="task-group" data-group="${esc(group.id)}"><h3 class="group-heading"><button data-action="toggle-group" aria-expanded="${!collapsed}"><span class="group-chevron" aria-hidden="true">›</span>${esc(group.name)}</button></h3><div class="task-group-items" ${collapsed ? "hidden" : ""}>${items.map(row).join("")}</div></section>`;
+      return `<section class="task-group" style="--category-color:${group.color || "var(--ink)"}" data-group="${esc(group.id)}"><h3 class="group-heading"><button data-action="toggle-group" aria-expanded="${!collapsed}"><span class="group-chevron" aria-hidden="true">›</span>${esc(group.name)}</button></h3><div class="task-group-items" ${collapsed ? "hidden" : ""}>${items.map(row).join("")}</div></section>`;
     })
     .join("");
 }
@@ -306,7 +313,7 @@ function currentTimeMode() {
 function readTime() {
   const mode = currentTimeMode();
   return D.normalizeTime(
-    mode === "range"
+    mode === "start" ? { mode, start: $("time-start").value } : mode === "range"
       ? { mode, start: $("time-start").value, end: $("time-end").value }
       : mode === "duration"
         ? {
@@ -320,12 +327,12 @@ function readTime() {
 }
 function updateTime() {
   const mode = currentTimeMode();
-  $("range-fields").hidden = mode !== "range";
+  $("range-fields").hidden = !["range", "start"].includes(mode);
+  $("end-time-label").hidden = mode === "start";
   $("calculate-end").hidden = mode !== "range";
   $("duration-fields").hidden = mode !== "duration";
-  ["time-start", "time-end"].forEach(
-    (id) => ($(id).disabled = mode !== "range"),
-  );
+  $("time-start").disabled = !["range", "start"].includes(mode);
+  $("time-end").disabled = mode !== "range";
   ["time-hours", "time-minutes"].forEach(
     (id) => ($(id).disabled = mode !== "duration"),
   );
@@ -334,7 +341,7 @@ function updateTime() {
     $("time-preview").textContent =
       time.mode === "none"
         ? t("No time set. You can add it later.")
-        : time.mode === "duration"
+        : time.mode === "start" ? time.start : time.mode === "duration"
           ? t("Estimated {duration}", {
               duration: duration(time.durationMinutes),
             })
@@ -371,9 +378,9 @@ function openTask(values = {}, edit = false) {
   document.querySelector(
     `input[name="time-mode"][value="${time.mode}"]`,
   ).checked = true;
-  if (time.mode === "range") {
+  if (time.mode === "start" || time.mode === "range") {
     $("time-start").value = time.start;
-    $("time-end").value = time.end;
+    if (time.end) $("time-end").value = time.end;
   }
   if (time.mode === "duration") {
     $("time-hours").value = Math.floor(time.durationMinutes / 60);
@@ -397,6 +404,24 @@ function renderCategories() {
         `<div class="category-entry" data-category-id="${esc(category.id)}"><div class="category-edit-row"><input type="color" data-field="color" value="${category.color}" aria-label="${esc(t("Color") + ": " + categoryName(category))}"><input type="text" data-field="name" value="${esc(category.builtinKey ? categoryName(category) : category.name)}" maxlength="30" aria-label="${esc(t("Category name"))}"><button class="icon-button" data-remove-category="${esc(category.id)}" title="${esc(t("Delete category"))}" aria-label="${esc(t("Delete category") + ": " + categoryName(category))}">${svg("close")}</button></div><details class="category-translations"${open.has(category.id) ? " open" : ""}><summary>${esc(t("Translations (optional)"))}</summary><div class="field-pair">${["en", "zh"].map((locale) => `<label><span>${esc(t(locale === "en" ? "English name" : "Chinese name"))}</span><input type="text" data-field="translation" data-language="${locale}" value="${esc(category.translations?.[locale] || "")}" placeholder="${esc(I.categoryName(locale, { ...category, translations: {} }))}" maxlength="30" lang="${locale === "zh" ? "zh-CN" : "en"}"></label>`).join("")}</div></details></div>`,
     )
     .join("");
+  for (const category of state.categories) {
+    const entry = [...$("category-manager").children].find((e) => e.dataset.categoryId === category.id);
+    const emoji = document.createElement("input");
+    emoji.type = "text";
+    emoji.className = "emoji-input";
+    emoji.dataset.field = "emoji";
+    emoji.value = category.emoji || "";
+    emoji.maxLength = 24;
+    emoji.placeholder = "☺";
+    emoji.setAttribute("aria-label", t("Emoji") + ": " + categoryName(category));
+    entry.querySelector('[data-field="name"]').after(emoji);
+    entry.querySelector('[data-field="name"]').style.color = category.color;
+    const swatches = document.createElement("div");
+    swatches.className = "color-palette";
+    swatches.innerHTML = palette(category.id, category.color);
+    entry.querySelector(".category-edit-row").after(swatches);
+  }
+  $("new-category-colors").innerHTML = palette("", $("category-color").value);
 }
 function openCategories(returnTo = "quick-category") {
   categoryReturn = returnTo;
@@ -454,6 +479,8 @@ function applyWindowState(value) {
       if (expanded) $("widget").classList.add("is-expanded");
     });
   } else {
+    if (categoryPopup?.matches(":popover-open")) categoryPopup.hidePopover();
+    if ($("voice-dialog").open) $("voice-dialog").close();
     $("widget").classList.remove("is-expanded");
     panel.hidden = !value.collapsing;
   }
@@ -518,6 +545,18 @@ async function initialize() {
     next.settings.aiEnabled = event.target.checked;
     if (!(await commit(next))) event.target.checked = state.settings.aiEnabled;
   };
+  for (const [id, client] of [["install-codex-skill", "codex"], ["install-claude-skill", "claude-code"]]) {
+    $(id).onclick = async () => {
+      $(id).disabled = true;
+      try {
+        await window.desktop.installSkill(client);
+        $("skill-install-status").textContent = t("Skill installed. Restart the AI client or open a new chat. In Codex use $pebble-todo; in Claude Code use /pebble-todo.");
+        toast(t("Skill installed"));
+      } catch (error) {
+        $("skill-install-status").textContent = t("Skill installation failed") + ": " + errorText(error);
+      } finally { $(id).disabled = false; }
+    };
+  }
   for (const client of ["codex", "claude"]) {
     $("copy-" + client).onclick = async () => {
       try {
@@ -534,7 +573,10 @@ async function initialize() {
       if ($(id).value === "__new") {
         $(id).value = $(id).dataset.previous || "";
         openCategories(id);
-      } else $(id).dataset.previous = $(id).value;
+      } else {
+        $(id).dataset.previous = $(id).value;
+      }
+      syncCategoryPicker($(id));
     };
   });
   $("quick-form").onsubmit = async (event) => {
@@ -716,13 +758,16 @@ async function initialize() {
       id,
       name,
       color: $("category-color").value,
+      emoji: $("category-emoji").value.trim(),
       builtinKey: "",
     });
     if (await commit(next, "Category added", true)) {
       $("category-name").value = "";
+      $("category-emoji").value = "";
       renderCategories();
       $(categoryReturn).value = id;
       $(categoryReturn).dataset.previous = id;
+      syncCategoryPicker($(categoryReturn));
     }
   };
   $("category-manager").onchange = async (event) => {
@@ -735,7 +780,7 @@ async function initialize() {
       ),
       name = event.target.value.trim(),
       field = event.target.dataset.field;
-    if (!name && field !== "translation") {
+    if (!name && !["translation", "emoji"].includes(field)) {
       renderCategories();
       return toast(t("Category name cannot be empty."));
     }
@@ -771,9 +816,22 @@ async function initialize() {
       category[field] = name;
       if (field === "name") category.builtinKey = "";
     }
-    await commit(next, "Category updated", true);
+    if (await commit(next, "Category updated", true)) {
+      const entry = event.target.closest("[data-category-id]");
+      if (field === "color" && entry) {
+        entry.querySelector('[data-field="name"]').style.color = category.color;
+        entry.querySelector(".color-palette").innerHTML = palette(category.id, category.color);
+      }
+    }
   };
   $("category-manager").onclick = async (event) => {
+    const swatch = event.target.closest("[data-palette-category]");
+    if (swatch) {
+      const next = clone(state);
+      next.categories.find((c) => c.id === swatch.dataset.paletteCategory).color = swatch.dataset.color;
+      if (await commit(next, "Category updated", true)) renderCategories();
+      return;
+    }
     const button = event.target.closest("[data-remove-category]");
     if (!button) return;
     const next = clone(state),
@@ -784,6 +842,12 @@ async function initialize() {
     });
     if (await commit(next, "Category deleted. Tasks and templates kept.", true))
       renderCategories();
+  };
+  $("new-category-colors").onclick = (event) => {
+    const swatch = event.target.closest("[data-color]");
+    if (!swatch) return;
+    $("category-color").value = swatch.dataset.color;
+    $("new-category-colors").innerHTML = palette("", swatch.dataset.color);
   };
   $("export-data").onclick = async () => {
     try {
@@ -891,6 +955,7 @@ async function initialize() {
   document.addEventListener("focusout", scheduleClose);
   window.addEventListener("blur", scheduleClose);
   document.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented) return;
     if (event.key === "Escape" && !anyDialog()) {
       document.activeElement?.blur();
       window.desktop.collapse();

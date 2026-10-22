@@ -165,6 +165,12 @@ async function add(ctx, title, category) {
         .pressSequentially("Creative projects", { delay: 55 });
       await click(page.locator("#category-form button"));
       await expect(page.locator(".category-entry")).toHaveCount(4);
+      const newest = page.locator(".category-entry").last();
+      await label("Choose a category color and optional emoji");
+      await newest.locator('[data-field="emoji"]').fill("🎨");
+      await newest.locator('[data-field="emoji"]').press("Tab");
+      await newest.locator('[data-color="#9966aa"]').click();
+      await pause(1000);
       await label("Optional English and Chinese names");
       const category = page.locator(".category-entry").last();
       await click(category.locator("summary"));
@@ -173,6 +179,10 @@ async function add(ctx, title, category) {
       await pause(650);
       const id = await category.getAttribute("data-category-id");
       await click(page.locator("#category-dialog .dialog-close"));
+      await label("Colors stay inside category options · the list stays neutral");
+      await click(page.locator('[data-select="quick-category"] .category-picker-trigger'));
+      await pause(1600);
+      await page.keyboard.press("Escape");
       await add(ctx, "Plan the next video", id);
       await label("Switch the entire interface to Chinese");
       await click(page.locator("#language-toggle"));
@@ -242,6 +252,46 @@ async function add(ctx, title, category) {
       } finally {
         await client.close();
       }
+    },
+  );
+  await record(
+    "voice-actions",
+    async (state) => {
+      state.tasks.push(D.makeTask({ title: "meeting" }), D.makeTask({ title: "Go swimming", categoryId: "sport" }));
+    },
+    async ({ page, label, click, pause }) => {
+      await label("Type a command or review your speech transcript");
+      await click(page.locator("#voice-button"));
+      await page.locator("#voice-transcript").pressSequentially("Complete the meeting.", { delay: 65 });
+      await click(page.locator("#voice-review"));
+      await expect(page.locator("#voice-preview strong")).toHaveText("Move to Done");
+      await label("Intent chooses Done, even when opened from To-do");
+      await pause(1800);
+      await click(page.locator("#voice-apply"));
+      await expect(page.locator('[data-tab="done"]')).toHaveClass(/active/);
+      await pause(1200);
+      await label("Start, reopen or correct the action before applying");
+      await click(page.locator("#voice-button"));
+      await page.locator("#voice-transcript").pressSequentially("Start the meeting", { delay: 65 });
+      await click(page.locator("#voice-review"));
+      await expect(page.locator("#voice-preview strong")).toHaveText("Move to Doing");
+      await pause(1500);
+      await click(page.locator("#voice-apply"));
+      await pause(1200);
+    },
+  );
+  await record(
+    "ai-options",
+    async () => {},
+    async ({ page, label, click, pause }) => {
+      await label("Settings → AI connections");
+      await click(page.locator("#settings-button"));
+      await click(page.locator("#settings-ai"));
+      await label("Install a local Codex / Claude Code Skill");
+      await pause(2300);
+      await label("Or keep using the original MCP configuration");
+      await page.locator("#ai-dialog").evaluate((node) => node.scrollTop = node.scrollHeight);
+      await pause(2300);
     },
   );
 })().catch((error) => {

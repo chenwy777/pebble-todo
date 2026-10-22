@@ -9,6 +9,7 @@ const {
   dialog,
   globalShortcut,
   clipboard,
+  systemPreferences,
 } = require("electron");
 const fs = require("node:fs/promises");
 const path = require("node:path");
@@ -18,6 +19,8 @@ const I = require("../src/i18n.js");
 const { TaskService } = require("./task-service.cjs");
 const { startBridge } = require("./ai-bridge.cjs");
 const { configurations } = require("./ai-config.cjs");
+const { installSkill } = require("./skill-install.cjs");
+const { Voice } = require("./voice.cjs");
 const {
   COMPACT,
   COLLAPSE_MS,
@@ -43,6 +46,9 @@ let win,
   orbSide = "right",
   taskService,
   aiBridge,
+  voice,
+  voicePermission = false,
+  voiceRequest = 0,
   bridgeQueue = Promise.resolve();
 let anchor,
   width = 448,
@@ -169,6 +175,35 @@ async function saveState(next, replace = false) {
   return saved;
 }
 function registerIPC() {
+  voice = new Voice(app.getPath("userData"), (progress) => {
+    if (!win.isDestroyed()) win.webContents.send("voice:progress", progress);
+  });
+  const ownVoiceFrame = (event) => {
+    if (event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame)
+      throw new Error("Invalid voice request.");
+  };
+  ipcMain.handle("voice:prepare", async (event) => {
+    ownVoiceFrame(event);
+    const request = ++voiceRequest;
+    await voice.call("prepare");
+    if (request !== voiceRequest) throw new Error("Voice operation cancelled.");
+    if (process.platform === "darwin" && !(await systemPreferences.askForMediaAccess("microphone")))
+      throw new Error("Microphone access denied. Allow Pebble in system privacy settings.");
+    if (request !== voiceRequest) throw new Error("Voice operation cancelled.");
+    voicePermission = true;
+    return true;
+  });
+  ipcMain.handle("voice:transcribe", (event, audio, language) => {
+    ownVoiceFrame(event);
+    if (!voicePermission || !["zh", "en"].includes(language)) throw new Error("Voice model is not ready.");
+    return voice.call("transcribe", { audio, language });
+  });
+  ipcMain.handle("voice:cancel", (event) => {
+    ownVoiceFrame(event);
+    voiceRequest++;
+    voicePermission = false;
+    voice.cancel();
+  });
   ipcMain.handle("window:get-state", () => ({
     expanded,
     collapsing,
@@ -180,6 +215,10 @@ function registerIPC() {
     notice: store.recoveryNotice || "",
   }));
   ipcMain.handle("data:save", (_, value) => saveState(value));
+  ipcMain.handle("ai:install-skill", async (event, client) => {
+    if (event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame) throw new Error("Invalid Skill request.");
+    return installSkill(client, { executable: app.getPath("exe"), directory: app.getPath("userData") });
+  });
   ipcMain.handle("ai:copy-config", (_, client) => {
     if (!["codex", "claude"].includes(client))
       throw new Error("Unknown AI client.");
@@ -320,6 +359,11 @@ async function createWindow() {
     },
   });
   win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  win.webContents.session.setPermissionRequestHandler((contents, permission, callback, details) => {
+    callback(contents === win.webContents && voicePermission && permission === "media" && details.mediaTypes?.length === 1 && details.mediaTypes[0] === "audio");
+  });
+  win.webContents.session.setPermissionCheckHandler((contents, permission, origin, details) =>
+    contents === win.webContents && voicePermission && permission === "media" && details.mediaType === "audio");
   win.webContents.on("will-navigate", (event) => event.preventDefault());
   registerIPC();
   await win.loadFile(path.join(__dirname, "../src/index.html"));
@@ -383,6 +427,7 @@ app.on("before-quit", (event) => {
   if (!quitting && store) {
     event.preventDefault();
     quitting = true;
+    voice?.cancel();
     clearInterval(dragTimer);
     clearTimeout(collapseTimer);
     globalShortcut.unregisterAll();

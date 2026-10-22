@@ -1,5 +1,6 @@
 node_modules/
 mcp/dist/
+electron/vendor/
 release/
 release-*/
 test-results/

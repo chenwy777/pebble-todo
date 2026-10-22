@@ -11,6 +11,15 @@ contextBridge.exposeInMainWorld("desktop", {
   drag: (phase) => ipcRenderer.send("window:drag", phase),
   menu: () => ipcRenderer.send("window:menu"),
   copyAiConfig: (client) => ipcRenderer.invoke("ai:copy-config", client),
+  installSkill: (client) => ipcRenderer.invoke("ai:install-skill", client),
+  prepareVoice: () => ipcRenderer.invoke("voice:prepare"),
+  transcribeVoice: (audio, language) => ipcRenderer.invoke("voice:transcribe", audio, language),
+  cancelVoice: () => ipcRenderer.invoke("voice:cancel"),
+  onVoiceProgress: (callback) => {
+    const listener = (_, value) => callback(value);
+    ipcRenderer.on("voice:progress", listener);
+    return () => ipcRenderer.removeListener("voice:progress", listener);
+  },
   quit: () => ipcRenderer.send("app:quit"),
   onWindow: (callback) => {
     const listener = (_, value) => callback(value);

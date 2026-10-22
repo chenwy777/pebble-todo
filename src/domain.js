@@ -18,6 +18,10 @@
   }
   function normalizeTime(time = { mode: "none" }) {
     if (time.mode === "none") return { mode: "none" };
+    if (time.mode === "start") {
+      minutes(time.start);
+      return { mode: "start", start: time.start };
+    }
     if (time.mode === "duration") {
       const durationMinutes = Number(time.durationMinutes);
       if (
@@ -149,6 +153,11 @@
     }
     return result;
   }
+  function categoryEmoji(value = "") {
+    if (typeof value !== "string" || value.length > 24 || /[<>\x00-\x1f]/.test(value))
+      fail("Choose a short emoji or leave it empty.");
+    return value.trim();
+  }
   function validateState(input) {
     if (
       !input ||
@@ -182,6 +191,7 @@
       builtinKey: preset(c, categoryDefaults, "name").builtinKey,
       translations: categoryTranslations(c.translations),
       color: color(c.color),
+      emoji: categoryEmoji(c.emoji),
     }));
     const categoryIds = new Set(categories.map((c) => c.id));
     const category = (value) => {

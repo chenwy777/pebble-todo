@@ -1,21 +1,26 @@
 {
   "name": "pebble-todo",
-  "version": "0.5.0",
+  "version": "0.6.1",
   "description": "A quiet floating to-do companion for Windows and macOS.",
   "author": "Pebble contributors",
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {
     "start": "electron .",
-    "test": "node --test tests/domain.test.cjs tests/store.test.cjs tests/layout.test.cjs tests/ai.test.cjs",
+    "prestart": "npm run build:voice",
+    "build:voice": "node scripts/build-voice.cjs",
+    "test": "node --test tests/domain.test.cjs tests/store.test.cjs tests/layout.test.cjs tests/ai.test.cjs tests/commands.test.cjs tests/skill.test.cjs",
     "build:mcp": "node mcp/build.cjs",
     "test:mcp": "node tests/mcp.cjs",
     "demo:record": "node scripts/record-demos.cjs",
-    "prepack": "npm run build:mcp",
-    "predist": "npm run build:mcp",
-    "predist:win": "npm run build:mcp",
-    "predist:mac": "npm run build:mcp",
+    "prepack": "npm run build:mcp && npm run build:voice",
+    "predist": "npm run build:mcp && npm run build:voice",
+    "predist:win": "npm run build:mcp && npm run build:voice",
+    "predist:mac": "npm run build:mcp && npm run build:voice",
     "test:desktop": "node tests/desktop.cjs",
+    "test:features": "node tests/features.cjs",
+    "test:voice-actions": "node tests/voice-actions.cjs",
+    "test:skill": "node tests/skill-desktop.cjs",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win nsis zip",
@@ -34,6 +39,12 @@
     "appId": "app.pebble.todo",
     "productName": "Pebble",
     "asar": true,
+    "asarUnpack": [
+      "node_modules/onnxruntime-node/**",
+      "node_modules/onnxruntime-web/**",
+      "node_modules/sharp/**",
+      "node_modules/@img/**"
+    ],
     "directories": {
       "output": "release"
     },
@@ -41,7 +52,10 @@
       "electron/**/*",
       "src/**/*",
       "assets/**/*",
-      "package.json"
+      "skills/**/*",
+      "package.json",
+      "!**/*.map",
+      "!node_modules/onnxruntime-node/bin/napi-v6/linux/**"
     ],
     "extraResources": [
       {
@@ -50,6 +64,7 @@
       }
     ],
     "win": {
+      "files": ["electron/**/*", "src/**/*", "assets/**/*", "skills/**/*", "package.json", "!node_modules/onnxruntime-node/bin/napi-v6/darwin/**", "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**"],
       "artifactName": "Pebble-${version}-windows-${arch}.${ext}",
       "target": [
         "nsis",
@@ -63,6 +78,10 @@
       "createDesktopShortcut": true
     },
     "mac": {
+      "files": ["electron/**/*", "src/**/*", "assets/**/*", "skills/**/*", "package.json", "!node_modules/onnxruntime-node/bin/napi-v6/win32/**"],
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Pebble uses the microphone only when you start voice input. Speech is recognized locally on your computer."
+      },
       "artifactName": "Pebble-${version}-macos-${arch}.${ext}",
       "target": [
         "dmg",
@@ -72,5 +91,9 @@
       "icon": "assets/icon.png",
       "darkModeSupport": true
     }
+  },
+  "dependencies": {
+    "@huggingface/transformers": "4.3.1",
+    "opencc-js": "1.0.5"
   }
 }
