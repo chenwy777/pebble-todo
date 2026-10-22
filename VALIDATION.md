@@ -1,7 +1,9 @@
 # MVP 验证记录
 
-## v0.6.1 语音意图修复与发行准备
+## v0.6.1 语音意图修复与公开发行
 
+- [0.6.1 发行工作流](https://github.com/chenwy777/pebble-todo/actions/runs/39728654431) 全部成功：Windows x64、macOS arm64、macOS x64 各通过 33 项单元测试并生成安装包，发行任务成功发布。[v0.6.1 下载页](https://github.com/chenwy777/pebble-todo/releases/tag/v0.6.1) 提供六个安装／压缩包和 SHA256SUMS.txt。
+- 已检查七个文件的匿名下载、README 文件名与资产对应关系，以及 SHA-256 校验值和 GitHub 资产 digest 一致；公开首页五段 GIF 均可匿名读取并以 image/gif 提供。未将用户事项、语音模型缓存、凭据、测试目录或旧构建上传到源码仓库。
 - 中英文 README 和安装文件名统一更新到 0.6.1，加入语音、分类样式与 Skill / MCP 两种入口的说明。使用隔离数据重新录制原三段动图，并新增指令预览、AI 接入入口两段 GIF；已检查实际画面。指令动图明确说明是键入指令，没有冒充麦克风识别演示。
 - 复现并修复截图中的 `Complete the meeting.` 被新增到 To-do 的问题：原来只识别 `completed` / `finished` 等表达，漏了命令式 `complete` / `finish`。
 - 状态操作不读取当前标签，按语句决定 Done / Doing / To-do；新增操作也可明确指定目标状态。已有事项会保留日期、时间与分类，完成或重新打开时正确更新 completedAt。
