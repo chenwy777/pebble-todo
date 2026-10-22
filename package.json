@@ -1,6 +1,6 @@
 {
   "name": "pebble-todo",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A quiet floating to-do companion for Windows and macOS.",
   "author": "Pebble contributors",
   "private": true,

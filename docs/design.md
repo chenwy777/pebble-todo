@@ -1,5 +1,9 @@
 # v0.2 visual direction
 
+## v0.4.1 clear glass refinement
+
+The floating orb has a nearly clear center (2.5% white tint), a restrained upper reflection and a fine asymmetric rim. The previous opaque gradient, broad blur and heavy inset highlight are removed, so the desktop remains visible through the circle. Hover brightens the rim without filling the center. Logo and count retain independent contrast rather than fading with the glass surface.
+
 ## v0.4 orb and opening direction
 
 The orb now uses a translucent neutral gradient, a thin highlight border and a low-contrast monoline P logo. With zero To-do items the logo is visible; otherwise the actual To-do count occupies the center. Doing and Done are excluded. There is no corner badge or numeric cap.
