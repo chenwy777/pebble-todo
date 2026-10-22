@@ -95,6 +95,63 @@ test("custom category names, templates, opacity and language survive migration",
   assert.equal(custom.settings.language, "zh");
 });
 
+test("custom common category names switch languages without changing stored names or references", () => {
+  const state = D.createState();
+  state.categories[2].name = "life";
+  state.categories[2].builtinKey = "";
+  state.tasks.push(D.makeTask({ title: "cooking dinner", categoryId: "life" }));
+  const saved = D.validateState(state);
+  assert.equal(I.categoryName("zh", saved.categories[2]), "生活");
+  assert.equal(I.categoryName("en", saved.categories[2]), "life");
+  assert.equal(saved.categories[2].name, "life");
+  assert.equal(saved.tasks[0].title, "cooking dinner");
+  assert.equal(saved.tasks[0].categoryId, "life");
+  assert.equal(I.categoryName("zh", { name: "  WORK  " }), "工作");
+  assert.equal(I.categoryName("en", { name: "旅行" }), "Travel");
+  assert.equal(
+    I.categoryName("zh", { name: "My life project" }),
+    "My life project",
+  );
+  assert.equal(
+    I.categoryName("zh", { name: "Research / 研究" }),
+    "Research / 研究",
+  );
+});
+
+test("explicit bilingual category names override defaults and dictionary and survive round trips", () => {
+  const state = D.createState();
+  state.categories[0].translations = { en: "  Research  ", zh: "  研究  " };
+  state.categories[2].name = "life";
+  state.categories[2].builtinKey = "";
+  state.categories[2].translations = { zh: "日常" };
+  const saved = D.validateState(JSON.parse(JSON.stringify(state)));
+  assert.equal(I.categoryName("en", saved.categories[0]), "Research");
+  assert.equal(I.categoryName("zh", saved.categories[0]), "研究");
+  assert.equal(I.categoryName("zh", saved.categories[2]), "日常");
+  assert.equal(I.categoryName("en", saved.categories[2]), "life");
+  assert.deepEqual(D.validateState(saved), saved);
+  saved.categories[2].translations.zh = "";
+  assert.equal(
+    I.categoryName("zh", D.validateState(saved).categories[2]),
+    "生活",
+  );
+});
+
+test("category translation validation rejects malformed labels and leaves unknown names intact", () => {
+  for (const translations of [
+    null,
+    [],
+    "bad",
+    { zh: 12 },
+    { en: "a".repeat(31) },
+  ]) {
+    const state = D.createState();
+    state.categories[0].translations = translations;
+    assert.throws(() => D.validateState(state));
+  }
+  assert.equal(I.categoryName("en", { name: "自定义主题" }), "自定义主题");
+});
+
 test("time ranges calculate minutes and explicitly identify next-day endings", () => {
   assert.deepEqual(
     D.normalizeTime({ mode: "range", start: "14:30", end: "16:00" }),

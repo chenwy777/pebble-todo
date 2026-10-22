@@ -156,12 +156,46 @@ async function main() {
     await page.locator("#category-name").fill("创作");
     await page.locator("#category-form button").click();
     await expect(
-      page.locator('#category-manager input[type="text"]'),
+      page.locator('#category-manager input[data-field="name"]'),
     ).toHaveCount(4);
     await expect(page.locator("#toast-message")).toHaveText("Category added");
-    const study = page.locator('[data-category-id="study"] input[type="text"]');
+    const study = page.locator(
+      '[data-category-id="study"] input[data-field="name"]',
+    );
     await study.fill("Research / 研究");
     await study.press("Tab");
+    await expect(page.locator("#toast-message")).toHaveText("Category updated");
+    const personal = page.locator(
+      '[data-category-id="life"] input[data-field="name"]',
+    );
+    await personal.fill("life");
+    await personal.press("Tab");
+    await expect(
+      page.locator('#quick-category option[value="life"]'),
+    ).toHaveText("life");
+    const creative = page
+      .locator(".category-entry")
+      .filter({ has: page.locator('input[data-field="name"][value="创作"]') });
+    await creative.locator("summary").click();
+    const englishLabel = creative.locator('[data-language="en"]');
+    const chineseLabel = creative.locator('[data-language="zh"]');
+    await englishLabel.fill("Studio");
+    await englishLabel.press("Tab");
+    await expect(page.locator("#quick-category option:checked")).toHaveText(
+      "Studio",
+    );
+    await englishLabel.fill("");
+    await englishLabel.press("Tab");
+    await expect(page.locator("#quick-category option:checked")).toHaveText(
+      "Creativity",
+    );
+    await englishLabel.fill("Studio");
+    await englishLabel.press("Tab");
+    await expect(page.locator("#quick-category option:checked")).toHaveText(
+      "Studio",
+    );
+    await chineseLabel.fill("工作室");
+    await chineseLabel.press("Tab");
     await expect(page.locator("#toast-message")).toHaveText("Category updated");
     await page.screenshot({
       path: path.join(results, "categories.png"),
@@ -170,7 +204,7 @@ async function main() {
     });
     await page.locator("#category-dialog .dialog-close").click();
     await expect(page.locator("#quick-category option:checked")).toHaveText(
-      "创作",
+      "Studio",
     );
     await page.locator('[data-tab="todo"]').click();
     await page.locator("#quick-title").fill("<img src=x onerror=alert(1)>");
@@ -304,6 +338,12 @@ async function main() {
     await expect(
       page.locator('#quick-category option[value="life"]'),
     ).toHaveText("生活");
+    await expect(
+      page.locator("#quick-category option").filter({ hasText: /^工作室$/ }),
+    ).toHaveCount(1);
+    await expect(
+      page.locator('[data-group="life"] .group-heading'),
+    ).toContainText("生活");
     await page.screenshot({
       path: path.join(results, "desktop-zh.png"),
       omitBackground: true,
@@ -331,11 +371,19 @@ async function main() {
     assert.equal(saved.tasks.length, 5);
     assert.equal(saved.settings.dateLanguage, "zh");
     assert.equal(saved.settings.language, "zh");
+    assert.equal(saved.categories.find((c) => c.id === "life").name, "life");
+    assert.deepEqual(
+      saved.categories.find((c) => c.name === "创作").translations,
+      { en: "Studio", zh: "工作室" },
+    );
     await app.close();
     page = await launch();
     await expect(page.locator(".task-title")).toHaveCount(3);
     await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
     await expect(page.locator("#weekday")).toContainText("星期");
+    await expect(
+      page.locator("#quick-category option").filter({ hasText: /^工作室$/ }),
+    ).toHaveCount(1);
     await page.locator("#collapse").click();
     await expect(page.locator("#panel")).toBeHidden();
     const bounds = await app.evaluate(({ BrowserWindow }) =>

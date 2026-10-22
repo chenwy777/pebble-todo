@@ -83,6 +83,11 @@
     "Edit names and colors below. Changes save when you leave the field.":
       "直接修改名称和颜色，离开输入框后自动保存。",
     "Category name": "分类名称",
+    "Translations (optional)": "中英文名称（可选）",
+    "English name": "英文名称",
+    "Chinese name": "中文名称",
+    "Common category names translate automatically. Add your own translations for other names.":
+      "常见分类名会自动切换语言，其他名称可展开填写中英文名称。",
     "New category name": "新分类名称",
     Color: "颜色",
     "Add category": "添加分类",
@@ -150,6 +155,7 @@
     "Too many tasks, categories or templates.": "事项、分类或模板数量过多。",
     "Duplicate data IDs.": "数据中有重复标识。",
     "Category does not exist.": "分类不存在。",
+    "Invalid category translations.": "分类的中英文名称格式无效。",
     "Invalid task status or date.": "事项状态或日期无效。",
     "Task data was damaged. The previous backup was restored and the original file was kept.":
       "数据文件损坏，已恢复上一次备份并保留原文件。",
@@ -176,5 +182,41 @@
     }
     return t(language, clean);
   }
-  return { t, error, zh };
+  // Exact category-name matches only. Never translate task text or guess partial names.
+  const categoryWords = [
+    ["Life", "生活", "personal", "personal life"],
+    ["Study", "学习", "learning"],
+    ["Exercise", "运动", "sport", "sports"],
+    ["Work", "工作"],
+    ["Health", "健康"],
+    ["Fitness", "健身"],
+    ["Reading", "阅读"],
+    ["Travel", "旅行"],
+    ["Hobbies", "兴趣", "hobby"],
+    ["Finance", "财务", "finances"],
+    ["Family", "家庭", "home"],
+    ["Shopping", "购物"],
+    ["Food", "饮食"],
+    ["Cooking", "烹饪"],
+    ["Social", "社交"],
+    ["Creativity", "创作", "creative"],
+    ["Content", "内容"],
+    ["Projects", "项目", "project"],
+    ["Chores", "家务"],
+    ["Entertainment", "娱乐"],
+    ["Rest", "休息"],
+  ];
+  function categoryName(language, category) {
+    const custom = category.translations?.[language];
+    if (custom) return custom;
+    if (category.builtinKey) return t(language, category.builtinKey);
+    const key = category.name.trim().toLowerCase();
+    const words = categoryWords.find((row) =>
+      row.some((word) => word.toLowerCase() === key),
+    );
+    if (!words) return category.name;
+    if (language === "zh") return words[1];
+    return key === words[1] ? words[0] : category.name;
+  }
+  return { t, error, zh, categoryName };
 });

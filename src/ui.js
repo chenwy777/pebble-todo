@@ -42,8 +42,7 @@ const language = () => state?.settings.language || "en";
 const t = (key, values) => I.t(language(), key, values);
 const errorText = (error) => I.error(language(), error.message || error);
 const duration = (minutes) => D.formatDuration(minutes, language());
-const categoryName = (category) =>
-  category.builtinKey ? t(category.builtinKey) : category.name;
+const categoryName = (category) => I.categoryName(language(), category);
 const templateName = (template) =>
   template.builtinKey ? t(template.builtinKey) : template.title;
 const dialogs = [...document.querySelectorAll("dialog")];
@@ -377,10 +376,15 @@ function openTask(values = {}, edit = false) {
   $("task-title").focus();
 }
 function renderCategories() {
+  const open = new Set(
+    [...$("category-manager").querySelectorAll("details[open]")].map(
+      (details) => details.closest("[data-category-id]").dataset.categoryId,
+    ),
+  );
   $("category-manager").innerHTML = state.categories
     .map(
       (category) =>
-        `<div class="category-edit-row" data-category-id="${esc(category.id)}"><input type="color" data-field="color" value="${category.color}" aria-label="${esc(t("Color") + ": " + categoryName(category))}"><input type="text" data-field="name" value="${esc(categoryName(category))}" maxlength="30" aria-label="${esc(t("Category name"))}"><button class="icon-button" data-remove-category="${esc(category.id)}" title="${esc(t("Delete category"))}" aria-label="${esc(t("Delete category") + ": " + categoryName(category))}">${svg("close")}</button></div>`,
+        `<div class="category-entry" data-category-id="${esc(category.id)}"><div class="category-edit-row"><input type="color" data-field="color" value="${category.color}" aria-label="${esc(t("Color") + ": " + categoryName(category))}"><input type="text" data-field="name" value="${esc(category.builtinKey ? categoryName(category) : category.name)}" maxlength="30" aria-label="${esc(t("Category name"))}"><button class="icon-button" data-remove-category="${esc(category.id)}" title="${esc(t("Delete category"))}" aria-label="${esc(t("Delete category") + ": " + categoryName(category))}">${svg("close")}</button></div><details class="category-translations"${open.has(category.id) ? " open" : ""}><summary>${esc(t("Translations (optional)"))}</summary><div class="field-pair">${["en", "zh"].map((locale) => `<label><span>${esc(t(locale === "en" ? "English name" : "Chinese name"))}</span><input type="text" data-field="translation" data-language="${locale}" value="${esc(category.translations?.[locale] || "")}" placeholder="${esc(I.categoryName(locale, { ...category, translations: {} }))}" maxlength="30" lang="${locale === "zh" ? "zh-CN" : "en"}"></label>`).join("")}</div></details></div>`,
     )
     .join("");
 }
@@ -690,13 +694,14 @@ async function initialize() {
           c.id ===
           event.target.closest("[data-category-id]").dataset.categoryId,
       ),
-      name = event.target.value.trim();
-    if (!name) {
+      name = event.target.value.trim(),
+      field = event.target.dataset.field;
+    if (!name && field !== "translation") {
       renderCategories();
       return toast(t("Category name cannot be empty."));
     }
     if (
-      event.target.dataset.field === "name" &&
+      field === "name" &&
       next.categories.some(
         (c) =>
           c.id !== category.id &&
@@ -707,8 +712,26 @@ async function initialize() {
       renderCategories();
       return toast(t("A category with this name already exists."));
     }
-    category[event.target.dataset.field] = name;
-    if (event.target.dataset.field === "name") category.builtinKey = "";
+    if (field === "translation") {
+      const locale = event.target.dataset.language;
+      category.translations ||= {};
+      if (name) category.translations[locale] = name;
+      else delete category.translations[locale];
+      if (
+        next.categories.some(
+          (c) =>
+            c.id !== category.id &&
+            I.categoryName(locale, c).toLowerCase() ===
+              I.categoryName(locale, category).toLowerCase(),
+        )
+      ) {
+        renderCategories();
+        return toast(t("A category with this name already exists."));
+      }
+    } else {
+      category[field] = name;
+      if (field === "name") category.builtinKey = "";
+    }
     await commit(next, "Category updated", true);
   };
   $("category-manager").onclick = async (event) => {

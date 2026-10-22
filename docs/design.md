@@ -1,5 +1,11 @@
 # v0.2 visual direction
 
+## v0.4.2 custom category localization
+
+All category headings, tags and selectors use the same label resolver: an explicit translation takes priority over a built-in label, then an exact match in the local common-category dictionary, then the original name. Only category labels use this dictionary; task text and custom template titles stay as entered. Category IDs and original names remain unchanged, including legacy custom `life` labels.
+
+Category management keeps translations under a collapsed optional section for each category. Users can provide English and Chinese names independently, or clear a field to restore the fallback. These labels are validated and stored with the category, so restart, undo and JSON backup round trips retain them. Unknown names are never sent to an external translation service or guessed.
+
 ## v0.4.1 clear glass refinement
 
 The floating orb has a nearly clear center (2.5% white tint), a restrained upper reflection and a fine asymmetric rim. The previous opaque gradient, broad blur and heavy inset highlight are removed, so the desktop remains visible through the circle. Hover brightens the rim without filling the center. Logo and count retain independent contrast rather than fading with the glass surface.
@@ -31,4 +37,4 @@ The implementation uses a neutral white / gray palette, thin row dividers, one s
 
 The main screen has only the date, progress, four tabs, category controls, task list and quick entry. Settings and time controls remain in dialogs. Category management is reachable from the main screen, settings, and each task/template category selector.
 
-English is the initial interface language. A visible 中文 / EN button and Settings → Language switch the interface, built-in labels, feedback, time formatting and native menus. Task content and custom category/template names are never machine-translated.
+English is the initial interface language. A visible 中文 / EN button and Settings → Language switch the interface, built-in labels, feedback, time formatting and native menus. Category localization follows the v0.4.2 rules above; task content and custom template names stay as entered.

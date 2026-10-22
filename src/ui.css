@@ -830,6 +830,26 @@ input[type="color"] {
   min-height: 32px !important;
   font-size: 12px !important;
 }
+.category-entry {
+  margin-bottom: 15px;
+}
+.category-translations {
+  margin-left: 35px;
+  color: #808087;
+  font-size: 10px;
+}
+.category-translations summary {
+  cursor: pointer;
+  padding: 2px 0 6px;
+}
+.category-translations .field-pair {
+  gap: 8px;
+  padding-top: 5px;
+}
+.category-translations input {
+  min-height: 30px !important;
+  padding: 6px !important;
+}
 .inline-form {
   display: flex;
   gap: 8px;

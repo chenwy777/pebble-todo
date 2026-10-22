@@ -135,6 +135,19 @@
       fail("Choose a valid color.");
     return value;
   }
+  function categoryTranslations(value) {
+    if (value === undefined) return {};
+    if (!value || typeof value !== "object" || Array.isArray(value))
+      fail("Invalid category translations.");
+    const result = {};
+    for (const language of ["en", "zh"]) {
+      const label = value[language];
+      if (label === undefined || label === "") continue;
+      if (typeof label !== "string") fail("Invalid category translations.");
+      if (label.trim()) result[language] = text(label, 30, "Category name");
+    }
+    return result;
+  }
   function validateState(input) {
     if (
       !input ||
@@ -161,6 +174,7 @@
       id: id(c.id),
       name: text(preset(c, categoryDefaults, "name").name, 30, "Category name"),
       builtinKey: preset(c, categoryDefaults, "name").builtinKey,
+      translations: categoryTranslations(c.translations),
       color: color(c.color),
     }));
     const categoryIds = new Set(categories.map((c) => c.id));
