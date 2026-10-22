@@ -17,7 +17,9 @@
     <div id="widget">
       <main id="panel" aria-label="Pebble" hidden>
         <header class="header">
-          <span class="brand">Pebble</span>
+          <button id="date-toggle" data-title="Click to change date language">
+            <span id="date"></span><span id="weekday"></span>
+          </button>
           <div class="window-actions">
             <button
               id="language-toggle"
@@ -47,11 +49,6 @@
             ></button>
           </div>
         </header>
-        <section class="day-heading">
-          <button id="date-toggle" data-title="Click to change date language">
-            <span id="weekday"></span><span id="date"></span>
-          </button>
-        </section>
         <section class="daily-summary">
           <span id="summary">Today’s progress</span
           ><span id="progress-label">0 / 0</span>
@@ -339,7 +336,7 @@
         >
           Drag the orb to move. Right-click it to quit.
         </p>
-        <div class="about">Pebble <small>0.2.0</small></div>
+        <div class="about">Pebble <small>0.3.0</small></div>
       </div>
     </dialog>
     <dialog id="category-dialog">

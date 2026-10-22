@@ -48,6 +48,7 @@ const templateName = (template) =>
   template.builtinKey ? t(template.builtinKey) : template.title;
 const dialogs = [...document.querySelectorAll("dialog")];
 const anyDialog = () => dialogs.some((d) => d.open);
+const collapsedGroups = new Set();
 
 function translateStatic() {
   document.documentElement.lang = language() === "zh" ? "zh-CN" : "en";
@@ -239,20 +240,35 @@ function renderTasks() {
         (a.time.start || "99").localeCompare(b.time.start || "99") ||
         b.createdAt.localeCompare(a.createdAt),
   );
-  $("task-list").innerHTML = list.length
-    ? list
-        .map((task) => {
-          const category = categoryTag(task.categoryId),
-            schedule = scheduleLabel(task),
-            action = {
-              todo: "Start task",
-              doing: "Mark complete",
-              done: "Move to To-do",
-            }[task.status];
-          return `<article class="task-card ${task.status === "done" ? "completed" : ""}" data-task-id="${esc(task.id)}"><button class="status-button ${task.status}" data-action="advance" title="${esc(t(action))}" aria-label="${esc(t(action) + ": " + task.title)}">${task.status === "todo" ? "" : svg(task.status === "doing" ? "play" : "check")}</button><div class="task-body" role="button" tabindex="0" data-action="edit" aria-label="${esc(t("Edit task") + ": " + task.title)}"><div class="task-title">${esc(task.title)}</div><div class="task-meta">${category}${category && schedule ? '<span class="meta-divider">·</span>' : ""}${schedule ? `<span class="task-schedule">${esc(schedule)}</span>` : ""}</div></div><button class="task-delete" data-action="delete" title="${esc(t("Delete task"))}" aria-label="${esc(t("Delete task") + ": " + task.title)}">${svg("close")}</button></article>`;
-        })
-        .join("")
-    : `<div class="empty"><strong>${esc(t(filter !== "all" ? "No tasks in this category" : { todo: "No to-dos", doing: "Nothing in progress", done: "No completed tasks" }[activeTab]))}</strong><p>${esc(t(filter !== "all" ? "Choose another category or add a task." : { todo: "Add a task below.", doing: "Start a task from To-do.", done: "Completed tasks appear here." }[activeTab]))}</p></div>`;
+  if (!list.length) {
+    $("task-list").innerHTML =
+      `<div class="empty"><strong>${esc(t(filter !== "all" ? "No tasks in this category" : { todo: "No to-dos", doing: "Nothing in progress", done: "No completed tasks" }[activeTab]))}</strong><p>${esc(t(filter !== "all" ? "Choose another category or add a task." : { todo: "Add a task below.", doing: "Start a task from To-do.", done: "Completed tasks appear here." }[activeTab]))}</p></div>`;
+    return;
+  }
+  const row = (task) => {
+    const schedule = scheduleLabel(task),
+      action = {
+        todo: "Start task",
+        doing: "Mark complete",
+        done: "Move to To-do",
+      }[task.status];
+    return `<article class="task-card ${task.status === "done" ? "completed" : ""}" data-task-id="${esc(task.id)}"><button class="status-button ${task.status}" data-action="advance" title="${esc(t(action))}" aria-label="${esc(t(action) + ": " + task.title)}">${task.status === "todo" ? "" : svg(task.status === "doing" ? "play" : "check")}</button><div class="task-body" role="button" tabindex="0" data-action="edit" aria-label="${esc(t("Edit task") + ": " + task.title)}"><div class="task-title">${esc(task.title)}</div><div class="task-meta">${schedule ? `<span class="task-schedule">${esc(schedule)}</span>` : ""}</div></div><button class="task-delete" data-action="delete" title="${esc(t("Delete task"))}" aria-label="${esc(t("Delete task") + ": " + task.title)}">${svg("close")}</button></article>`;
+  };
+  const groups = [
+    ...state.categories.map((category) => ({
+      id: category.id,
+      name: categoryName(category),
+    })),
+    { id: "", name: t("Uncategorized") },
+  ];
+  $("task-list").innerHTML = groups
+    .map((group) => {
+      const items = list.filter((task) => task.categoryId === group.id);
+      if (!items.length) return "";
+      const collapsed = collapsedGroups.has(group.id);
+      return `<section class="task-group" data-group="${esc(group.id)}"><h3 class="group-heading"><button data-action="toggle-group" aria-expanded="${!collapsed}"><span class="group-chevron" aria-hidden="true">›</span>${esc(group.name)}</button></h3><div class="task-group-items" ${collapsed ? "hidden" : ""}>${items.map(row).join("")}</div></section>`;
+    })
+    .join("");
 }
 function renderTemplates() {
   const list = state.templates.filter(
@@ -478,6 +494,15 @@ async function initialize() {
   $("task-list").onclick = async (event) => {
     const button = event.target.closest("[data-action]");
     if (!button) return;
+    if (button.dataset.action === "toggle-group") {
+      const key = button.closest("[data-group]").dataset.group;
+      if (collapsedGroups.has(key)) collapsedGroups.delete(key);
+      else collapsedGroups.add(key);
+      button.setAttribute("aria-expanded", String(!collapsedGroups.has(key)));
+      button.closest("[data-group]").querySelector(".task-group-items").hidden =
+        collapsedGroups.has(key);
+      return;
+    }
     const task = state.tasks.find(
       (task) => task.id === button.closest("[data-task-id]").dataset.taskId,
     );

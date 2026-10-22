@@ -16,7 +16,7 @@ test("first launch starts empty and saved multilingual tasks survive a restart",
     state = await store.load();
   assert.equal(state.tasks.length, 0);
   state.tasks.push(
-    D.makeTask({ title: "复习 CV / Review résumé", categoryId: "career" }),
+    D.makeTask({ title: "复习 CV / Review résumé", categoryId: "study" }),
   );
   await store.save(state);
   const reopened = new Store(store.directory);

@@ -3,15 +3,19 @@ const assert = require("node:assert/strict");
 const D = require("../src/domain.js");
 const I = require("../src/i18n.js");
 
-test("new profiles default to English and built-in labels are localizable", () => {
+test("new profiles default to English without job-search categories or templates", () => {
   const state = D.createState();
   assert.equal(state.settings.language, "en");
-  assert.equal(state.categories[0].name, "Career");
-  assert.equal(state.templates[0].title, "Review CV");
-  assert.equal(I.t("zh", state.categories[0].builtinKey), "求职");
+  assert.equal(state.settings.opacity, 82);
+  assert.equal(state.categories[0].name, "Study");
+  assert.equal(I.t("zh", state.categories[0].builtinKey), "学习");
   assert.equal(
-    I.t("zh", "Estimated {duration}", { duration: "1小时30分钟" }),
-    "预计 1小时30分钟",
+    state.categories.some((c) => c.id === "career"),
+    false,
+  );
+  assert.equal(
+    state.templates.some((t) => ["cv", "apply"].includes(t.id)),
+    false,
   );
   assert.equal(
     I.error("zh", "Start and end times must be different."),
@@ -19,31 +23,75 @@ test("new profiles default to English and built-in labels are localizable", () =
   );
 });
 
-test("legacy defaults migrate while customized names, tasks and selected language survive validation", () => {
+test("legacy job-search preset is removed without deleting tasks or customized templates", () => {
   const state = D.createState();
   delete state.settings.language;
   state.settings.dateLanguage = "zh";
-  state.categories[0].name = "求职";
-  delete state.categories[0].builtinKey;
-  state.categories[1].name = "Research / 研究";
-  delete state.categories[1].builtinKey;
-  state.templates[0].title = "改我的 CV";
-  delete state.templates[0].builtinKey;
-  state.tasks.push(D.makeTask({ title: "我的事项", categoryId: "career" }));
+  delete state.settings.appearanceVersion;
+  state.settings.opacity = 94;
+  state.categories.unshift({ id: "career", name: "求职", color: "#8c94d9" });
+  state.templates.unshift(
+    { id: "cv", title: "修改 CV", categoryId: "career", durationMinutes: 45 },
+    {
+      id: "apply",
+      title: "投递岗位",
+      categoryId: "career",
+      durationMinutes: 30,
+    },
+  );
+  state.templates.push({
+    id: "my-template",
+    title: "My own template",
+    categoryId: "career",
+    durationMinutes: 30,
+  });
+  state.tasks.push(D.makeTask({ title: "Keep my task", categoryId: "career" }));
   const migrated = D.validateState(state);
   assert.equal(migrated.settings.language, "en");
   assert.equal(migrated.settings.dateLanguage, "en");
-  assert.equal(migrated.categories[0].name, "Career");
-  assert.equal(migrated.categories[1].name, "Research / 研究");
-  assert.equal(migrated.categories[1].builtinKey, "");
-  assert.equal(migrated.templates[0].title, "改我的 CV");
-  assert.equal(migrated.tasks[0].title, "我的事项");
-  migrated.settings.language = "zh";
-  migrated.settings.dateLanguage = "zh";
-  migrated.categories[0].name = "Career edited";
-  const custom = D.validateState(migrated);
-  assert.equal(custom.categories[0].name, "Career edited");
-  assert.equal(custom.categories[0].builtinKey, "");
+  assert.equal(migrated.settings.opacity, 82);
+  assert.equal(
+    migrated.categories.some((c) => c.id === "career"),
+    false,
+  );
+  assert.equal(migrated.tasks[0].title, "Keep my task");
+  assert.equal(migrated.tasks[0].categoryId, "");
+  assert.equal(
+    migrated.templates.some((t) => ["cv", "apply"].includes(t.id)),
+    false,
+  );
+  assert.equal(
+    migrated.templates.find((t) => t.id === "my-template").categoryId,
+    "",
+  );
+  assert.deepEqual(D.validateState(migrated), migrated);
+});
+
+test("custom category names, templates, opacity and language survive migration", () => {
+  const state = D.createState();
+  state.categories.unshift({
+    id: "career",
+    name: "Creative projects",
+    color: "#8c94d9",
+    builtinKey: "",
+  });
+  state.templates.unshift({
+    id: "cv",
+    title: "My custom routine",
+    categoryId: "career",
+    durationMinutes: 15,
+    builtinKey: "",
+  });
+  state.categories[1].name = "Research / 研究";
+  state.categories[1].builtinKey = "";
+  state.settings.language = "zh";
+  state.settings.dateLanguage = "zh";
+  state.settings.opacity = 77;
+  const custom = D.validateState(state);
+  assert.equal(custom.categories[0].name, "Creative projects");
+  assert.equal(custom.categories[1].name, "Research / 研究");
+  assert.equal(custom.templates[0].title, "My custom routine");
+  assert.equal(custom.settings.opacity, 77);
   assert.equal(custom.settings.language, "zh");
 });
 
@@ -90,7 +138,7 @@ test("state validation rejects corrupt dates, broken category references and dup
   state.tasks.push(
     D.makeTask({
       title: "复习 CV",
-      categoryId: "career",
+      categoryId: "study",
       date: "2026-10-22",
       time: { mode: "duration", durationMinutes: 45 },
     }),

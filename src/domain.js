@@ -75,7 +75,6 @@
   }
   function createState() {
     const categories = [
-      { id: "career", name: "求职", color: "#8c94d9" },
       { id: "study", name: "学习", color: "#d5a76b" },
       { id: "sport", name: "运动", color: "#7aa995" },
       { id: "life", name: "生活", color: "#ce8e99" },
@@ -88,18 +87,6 @@
         ...preset(c, categoryDefaults, "name"),
       })),
       templates: [
-        {
-          id: "cv",
-          title: "修改 CV",
-          categoryId: "career",
-          durationMinutes: 45,
-        },
-        {
-          id: "apply",
-          title: "投递岗位",
-          categoryId: "career",
-          durationMinutes: 30,
-        },
         {
           id: "read",
           title: "阅读 / 学习",
@@ -124,7 +111,8 @@
         dateLanguage: "en",
         language: "en",
         textColor: "#292c2b",
-        opacity: 94,
+        opacity: 82,
+        appearanceVersion: 3,
         pinned: false,
         position: null,
       },
@@ -211,6 +199,31 @@
           }).durationMinutes
         : 0,
     }));
+    // Remove only the retired, unedited built-in. Keep tasks and user-customized names/templates.
+    const removeCareer = categories.some(
+      (c) => c.id === "career" && c.builtinKey === "Career",
+    );
+    const activeCategories = removeCareer
+      ? categories.filter((c) => c.id !== "career")
+      : categories;
+    const activeTasks = removeCareer
+      ? tasks.map((t) =>
+          t.categoryId === "career" ? { ...t, categoryId: "" } : t,
+        )
+      : tasks;
+    const activeTemplates = removeCareer
+      ? templates
+          .filter(
+            (t) =>
+              !(
+                ["cv", "apply"].includes(t.id) &&
+                ["Review CV", "Apply for jobs"].includes(t.builtinKey)
+              ),
+          )
+          .map((t) =>
+            t.categoryId === "career" ? { ...t, categoryId: "" } : t,
+          )
+      : templates;
     const s = input.settings || {};
     const position =
       s.position &&
@@ -220,14 +233,18 @@
         : null;
     return {
       schemaVersion: 1,
-      tasks,
-      categories,
-      templates,
+      tasks: activeTasks,
+      categories: activeCategories,
+      templates: activeTemplates,
       settings: {
         dateLanguage: s.language && s.dateLanguage === "zh" ? "zh" : "en",
         language: s.language === "zh" ? "zh" : "en",
         textColor: color(s.textColor || "#292c2b"),
-        opacity: Math.max(70, Math.min(100, Number(s.opacity) || 94)),
+        opacity:
+          Number(s.appearanceVersion || 0) < 3 && Number(s.opacity) === 94
+            ? 82
+            : Math.max(70, Math.min(100, Number(s.opacity) || 82)),
+        appearanceVersion: 3,
         pinned: Boolean(s.pinned),
         position,
       },

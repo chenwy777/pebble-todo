@@ -64,10 +64,13 @@ async function main() {
       false,
     );
     await expect(
+      page.locator('#quick-category option[value="life"]'),
+    ).toHaveText("Personal");
+    await expect(
       page.locator('#quick-category option[value="career"]'),
-    ).toHaveText("Career");
-    await page.locator("#quick-title").fill("复习 CV / Review résumé");
-    await page.locator("#quick-category").selectOption("career");
+    ).toHaveCount(0);
+    await page.locator("#quick-title").fill("整理资料 / Review notes");
+    await page.locator("#quick-category").selectOption("life");
     await page.locator("#schedule-button").click();
     await page
       .locator(".time-modes label")
@@ -86,7 +89,7 @@ async function main() {
     await page.locator("#today-button").click();
     await page.locator("#save-task").click();
     await expect(page.locator(".task-title")).toHaveText(
-      "复习 CV / Review résumé",
+      "整理资料 / Review notes",
     );
     await expect(page.locator(".task-schedule")).toContainText(
       "next day 01:00",
@@ -129,7 +132,7 @@ async function main() {
     await page.locator("#category-form button").click();
     await expect(
       page.locator('#category-manager input[type="text"]'),
-    ).toHaveCount(5);
+    ).toHaveCount(4);
     await expect(page.locator("#toast-message")).toHaveText("Category added");
     const study = page.locator('[data-category-id="study"] input[type="text"]');
     await study.fill("Research / 研究");
@@ -158,9 +161,9 @@ async function main() {
     await page.locator(".task-delete").click();
     await expect(page.locator(".task-title")).toHaveCount(0);
     for (const [title, category] of [
-      ["整理作品集 · Portfolio", "career"],
+      ["整理资料 · Notes", "life"],
       ["读 20 页书", "study"],
-      ["去散步，让脑袋透透气", "life"],
+      ["晚间散步 · Evening walk", "sport"],
     ]) {
       await page.locator("#quick-category").selectOption(category);
       await page.locator("#quick-title").fill(title);
@@ -171,7 +174,7 @@ async function main() {
         page.locator(".task-title").filter({ hasText: title }),
       ).toHaveCount(1);
     }
-    await page.locator(".task-body").filter({ hasText: "整理作品集" }).click();
+    await page.locator(".task-body").filter({ hasText: "整理资料" }).click();
     await page
       .locator(".time-modes label")
       .filter({ hasText: "Duration" })
@@ -191,12 +194,65 @@ async function main() {
     await page.locator("#pin").click();
     await expect(page.locator("#pin")).toHaveAttribute("aria-pressed", "true");
     await page.locator("#dismiss-toast").click();
+    const group = page.locator('[data-group="study"]');
+    await group.locator('[data-action="toggle-group"]').click();
+    await expect(group.locator(".task-group-items")).toBeHidden();
+    await group.locator('[data-action="toggle-group"]').click();
+    await expect(group.locator(".task-group-items")).toBeVisible();
+    await page.locator("#pin").focus();
+    await page.mouse.move(8, 8);
+    await expect
+      .poll(() =>
+        page
+          .locator(".task-card")
+          .evaluateAll((rows) =>
+            rows.every((row) => getComputedStyle(row).opacity === "1"),
+          ),
+      )
+      .toBe(true);
     await page.screenshot({
       path: path.join(results, "desktop-expanded.png"),
       omitBackground: true,
       scale: "css",
     });
+    const focusedRow = page.locator(".task-card").first();
+    await focusedRow.hover();
+    await expect
+      .poll(() =>
+        page
+          .locator(".task-card")
+          .nth(1)
+          .evaluate((row) => Number(getComputedStyle(row).opacity)),
+      )
+      .toBeLessThan(0.6);
+    await expect
+      .poll(() =>
+        focusedRow.evaluate(
+          (row) => new DOMMatrixReadOnly(getComputedStyle(row).transform).a,
+        ),
+      )
+      .toBeGreaterThan(1.01);
+    await page.screenshot({
+      path: path.join(results, "task-hover.png"),
+      omitBackground: true,
+      scale: "css",
+    });
+    await page.locator("#pin").hover();
+    await expect
+      .poll(() =>
+        page
+          .locator(".task-card")
+          .evaluateAll((rows) =>
+            rows.every((row) => getComputedStyle(row).opacity === "1"),
+          ),
+      )
+      .toBe(true);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await focusedRow.hover();
+    await expect(focusedRow).toHaveCSS("transform", "none");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.locator('[data-tab="templates"]').click();
+    await expect(page.locator('[data-template-id="cv"]')).toHaveCount(0);
     await page.screenshot({
       path: path.join(results, "templates.png"),
       omitBackground: true,
@@ -219,8 +275,8 @@ async function main() {
       page.locator('#quick-category option[value="study"]'),
     ).toHaveText("Research / 研究");
     await expect(
-      page.locator('#quick-category option[value="career"]'),
-    ).toHaveText("求职");
+      page.locator('#quick-category option[value="life"]'),
+    ).toHaveText("生活");
     await page.screenshot({
       path: path.join(results, "desktop-zh.png"),
       omitBackground: true,
