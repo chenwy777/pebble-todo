@@ -165,11 +165,11 @@ function render() {
   );
   const done = daily.filter((t) => t.status === "done").length;
   $("summary").textContent = done
-    ? `今天已经完成 ${done} 件小事`
-    : "慢慢来，一件一件完成。";
+    ? `今日已完成 ${done} 项`
+    : "今日进度";
   $("progress-label").textContent = daily.length
     ? `${done} / ${daily.length}`
-    : "a fresh start";
+    : "0 / 0";
   $("progress-bar").style.width =
     `${daily.length ? (done / daily.length) * 100 : 0}%`;
   $("pin").setAttribute("aria-pressed", String(settings.pinned));
@@ -194,10 +194,10 @@ function render() {
   $("quick-form").hidden = templates;
   $("new-template").hidden = !templates;
   $("list-label").textContent = {
-    todo: "留一点空间给重要的事",
-    doing: "专注眼前的这一件",
-    done: "每一步，都算数",
-    templates: "熟悉的小事，一键加入",
+    todo: "待办事项",
+    doing: "进行中的事项",
+    done: "已完成事项",
+    templates: "选择模板，快速添加",
   }[activeTab];
   if (templates) renderTemplates();
   else renderTasks();
@@ -224,10 +224,10 @@ function renderTasks() {
             doing: "标记完成",
             done: "移回待办",
           }[t.status];
-          return `<article class="task-card ${t.status === "done" ? "completed" : ""}" data-task-id="${esc(t.id)}"><button class="status-button ${t.status}" data-action="advance" title="${action}" aria-label="${action}：${esc(t.title)}">${t.status === "todo" ? "" : svg(t.status === "doing" ? "play" : "check")}</button><div class="task-body" role="button" tabindex="0" data-action="edit" aria-label="编辑：${esc(t.title)}"><div class="task-title">${esc(t.title)}</div><div class="task-meta">${category}${category && schedule ? '<span class="meta-divider"></span>' : ""}${schedule ? `<span class="task-schedule">${svg("clock")}${esc(schedule)}</span>` : ""}${!category && !schedule ? "<span>随时开始，一点一点来</span>" : ""}</div></div><button class="task-delete" data-action="delete" title="删除事项" aria-label="删除：${esc(t.title)}">${svg("close")}</button></article>`;
+          return `<article class="task-card ${t.status === "done" ? "completed" : ""}" data-task-id="${esc(t.id)}"><button class="status-button ${t.status}" data-action="advance" title="${action}" aria-label="${action}：${esc(t.title)}">${t.status === "todo" ? "" : svg(t.status === "doing" ? "play" : "check")}</button><div class="task-body" role="button" tabindex="0" data-action="edit" aria-label="编辑：${esc(t.title)}"><div class="task-title">${esc(t.title)}</div><div class="task-meta">${category}${category && schedule ? '<span class="meta-divider"></span>' : ""}${schedule ? `<span class="task-schedule">${svg("clock")}${esc(schedule)}</span>` : ""}${!category && !schedule ? "<span>未设置分类和时间</span>" : ""}</div></div><button class="task-delete" data-action="delete" title="删除事项" aria-label="删除：${esc(t.title)}">${svg("close")}</button></article>`;
         })
         .join("")
-    : `<div class="empty"><div class="empty-illustration">${svg(activeTab === "done" ? "check" : "leaf")}</div><strong>${filter !== "all" ? "这个分类还没有事项" : { todo: "给今天留一点期待", doing: "一次专注一件事", done: "小小的完成，也值得记录" }[activeTab]}</strong><p>${filter !== "all" ? "切换分类，或者记下一件新事项。" : { todo: "在下面记下第一件小事。<br>不用一次安排好所有事情。", doing: "点击待办左侧的小方框，就可以开始。", done: "完成的事项会留在这里。<br>今天，也可以慢慢来。" }[activeTab]}</p></div>`;
+    : `<div class="empty"><div class="empty-illustration">${svg(activeTab === "done" ? "check" : "leaf")}</div><strong>${filter !== "all" ? "此分类暂无事项" : { todo: "暂无待办事项", doing: "暂无进行中的事项", done: "暂无已完成事项" }[activeTab]}</strong><p>${filter !== "all" ? "可以切换分类或添加事项。" : { todo: "在下方输入框添加事项。", doing: "点击待办事项左侧的按钮，移至 Doing。", done: "标记完成的事项将在这里显示。" }[activeTab]}</p></div>`;
 }
 function renderTemplates() {
   const list = state.templates.filter(
@@ -240,7 +240,7 @@ function renderTemplates() {
             `<article class="template-card" data-template-id="${esc(t.id)}"><button class="template-add" data-action="use-template" aria-label="使用模板：${esc(t.title)}"><span class="template-symbol">${svg("plus")}</span><div class="template-title">${esc(t.title)}</div><div class="template-meta">${categoryTag(t.categoryId)}${t.durationMinutes ? `<span>${esc(D.formatDuration(t.durationMinutes))}</span>` : ""}</div></button><button class="template-delete icon-button" data-action="delete-template" aria-label="删除模板：${esc(t.title)}">${svg("close")}</button></article>`,
         )
         .join("")
-    : '<div class="empty" style="grid-column:1/-1"><strong>把常做的事，留在这里</strong><p>创建一个模板，下次就能快速加入。</p></div>';
+    : '<div class="empty" style="grid-column:1/-1"><strong>暂无快捷模板</strong><p>创建模板后可快速添加事项。</p></div>';
 }
 function currentTimeMode() {
   return document.querySelector('input[name="time-mode"]:checked').value;
@@ -273,7 +273,7 @@ function updateTime() {
     const time = readTime();
     $("time-preview").textContent =
       time.mode === "none"
-        ? "留白也很好，随时可以再安排。"
+        ? "未设置时间，可稍后编辑。"
         : time.mode === "duration"
           ? `预计用时 ${D.formatDuration(time.durationMinutes)}`
           : `${time.start} → ${time.overnight ? "次日 " : ""}${time.end} · ${D.formatDuration(time.durationMinutes)}`;
@@ -329,7 +329,7 @@ async function quickAdd(event) {
       status: activeTab,
     }),
   );
-  if (await commit(next, "记下了，慢慢来。", true)) {
+  if (await commit(next, "事项已添加", true)) {
     $("quick-title").value = "";
     $("quick-title").focus();
   }
@@ -357,8 +357,8 @@ async function taskAction(event) {
       next,
       {
         todo: "已移回 To-do",
-        doing: "已开始，加油。",
-        done: "又完成了一件小事。",
+        doing: "已移至 Doing",
+        done: "已标记完成",
       }[target.status],
       true,
     );

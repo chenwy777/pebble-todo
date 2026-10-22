@@ -56,7 +56,7 @@
         <section class="daily-summary" aria-label="完成进度">
           <div>
             <span class="summary-dot"></span
-            ><span id="summary">慢慢来，一件一件完成。</span
+            ><span id="summary">今日进度</span
             ><span id="progress-label"></span>
           </div>
           <div class="progress-track"><div id="progress-bar"></div></div>
@@ -76,7 +76,7 @@
           </button>
         </nav>
         <div class="list-toolbar">
-          <span id="list-label">留一点空间给重要的事</span
+          <span id="list-label">待办事项</span
           ><select id="category-filter" aria-label="按分类筛选">
             <option value="all">所有分类</option>
           </select>
@@ -99,7 +99,7 @@
               ><input
                 id="quick-title"
                 maxlength="240"
-                placeholder="记下下一件小事…"
+                placeholder="添加事项…"
                 aria-label="新增事项"
                 required
               /><button
@@ -157,7 +157,7 @@
           ></button>
         </div>
         <label
-          >想做什么？<input
+          >事项名称<input
             id="task-title"
             required
             maxlength="240"
@@ -174,7 +174,7 @@
           ><label>分类<select id="task-category"></select></label>
         </div>
         <label
-          >安排在哪天？
+          >安排日期
           <div class="date-field">
             <input id="task-date" type="date" aria-label="任务日期" /><button
               type="button"
@@ -269,7 +269,7 @@
             </div>
           </div>
           <p id="time-preview" class="time-preview" aria-live="polite">
-            留白也很好，随时可以再安排。
+            未设置时间，可稍后编辑。
           </p>
         </fieldset>
         <p id="task-error" class="form-error" role="alert"></p>
@@ -294,7 +294,7 @@
         <div class="setting-row">
           <div>
             <strong>文字颜色</strong>
-            <p>给你的小空间一点个性</p>
+            <p>设置事项文字的显示颜色</p>
           </div>
           <input id="text-color" type="color" aria-label="文字颜色" />
         </div>
