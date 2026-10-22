@@ -81,6 +81,7 @@
     ];
     return {
       schemaVersion: 1,
+      revision: 0,
       tasks: [],
       categories: categories.map((c) => ({
         ...c,
@@ -163,6 +164,11 @@
       input.templates.length > 1000
     )
       fail("Too many tasks, categories or templates.");
+    if (
+      input.revision !== undefined &&
+      (!Number.isSafeInteger(input.revision) || input.revision < 0)
+    )
+      fail("Invalid data revision.");
     const ids = new Set();
     const id = (value) => {
       const result = text(value, 100, "ID");
@@ -199,6 +205,11 @@
           t.status === "done"
             ? new Date(t.completedAt || createdAt).toISOString()
             : null,
+        ...(t.externalRequestId === undefined
+          ? {}
+          : {
+              externalRequestId: text(t.externalRequestId, 100, "Request ID"),
+            }),
       };
     });
     const templates = input.templates.map((t) => ({
@@ -247,6 +258,7 @@
         : null;
     return {
       schemaVersion: 1,
+      revision: input.revision ?? 0,
       tasks: activeTasks,
       categories: activeCategories,
       templates: activeTemplates,
@@ -260,6 +272,7 @@
             : Math.max(70, Math.min(100, Number(s.opacity) || 82)),
         appearanceVersion: 3,
         pinned: Boolean(s.pinned),
+        aiEnabled: s.aiEnabled === true,
         position,
       },
     };
@@ -275,6 +288,15 @@
       time: normalizeTime(values.time),
       createdAt: now,
       completedAt: values.status === "done" ? now : null,
+      ...(values.externalRequestId === undefined
+        ? {}
+        : {
+            externalRequestId: text(
+              values.externalRequestId,
+              100,
+              "Request ID",
+            ),
+          }),
     };
   }
   return {

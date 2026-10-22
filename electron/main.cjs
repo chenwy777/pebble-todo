@@ -8,12 +8,16 @@ const {
   nativeImage,
   dialog,
   globalShortcut,
+  clipboard,
 } = require("electron");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { Store } = require("./store.cjs");
 const { validateState } = require("../src/domain.js");
 const I = require("../src/i18n.js");
+const { TaskService } = require("./task-service.cjs");
+const { startBridge } = require("./ai-bridge.cjs");
+const { configurations } = require("./ai-config.cjs");
 const {
   COMPACT,
   COLLAPSE_MS,
@@ -37,7 +41,9 @@ let win,
   collapsing = false,
   collapseTimer,
   orbSide = "right",
-  stateQueue = Promise.resolve();
+  taskService,
+  aiBridge,
+  bridgeQueue = Promise.resolve();
 let anchor,
   width = 448,
   height = 714,
@@ -63,21 +69,34 @@ function notify(extra = {}) {
     ...extra,
   });
 }
-function updateState(change) {
-  const operation = stateQueue.then(async () => {
-    const saved = await store.save(change(state));
-    state = saved;
-    return saved;
-  });
-  stateQueue = operation.catch(() => {});
-  return operation;
+function updateState(change, options) {
+  return taskService.update(change, options);
+}
+function syncBridge() {
+  bridgeQueue = bridgeQueue
+    .catch(() => {})
+    .then(async () => {
+      if (state.settings.aiEnabled && !aiBridge)
+        aiBridge = await startBridge(app.getPath("userData"), (method, args) =>
+          taskService.execute(method, args),
+        );
+      else if (!state.settings.aiEnabled && aiBridge) {
+        const previous = aiBridge;
+        aiBridge = null;
+        await previous.close();
+      }
+    });
+  return bridgeQueue;
 }
 function persistAnchor() {
   const position = { ...anchor };
-  updateState((current) => ({
-    ...current,
-    settings: { ...current.settings, position },
-  })).catch((error) =>
+  updateState(
+    (current) => ({
+      ...current,
+      settings: { ...current.settings, position },
+    }),
+    { bump: false },
+  ).catch((error) =>
     dialog.showErrorBox(
       t("Unable to save position"),
       I.error(state.settings.language, error.message),
@@ -144,13 +163,10 @@ function menu() {
     { label: t("Quit Pebble"), click: () => app.quit() },
   ]).popup({ window: win });
 }
-async function saveState(next) {
-  return updateState((current) =>
-    validateState({
-      ...next,
-      settings: { ...next.settings, position: current.settings.position },
-    }),
-  );
+async function saveState(next, replace = false) {
+  const saved = await taskService.save(next, replace);
+  await syncBridge();
+  return saved;
 }
 function registerIPC() {
   ipcMain.handle("window:get-state", () => ({
@@ -164,6 +180,16 @@ function registerIPC() {
     notice: store.recoveryNotice || "",
   }));
   ipcMain.handle("data:save", (_, value) => saveState(value));
+  ipcMain.handle("ai:copy-config", (_, client) => {
+    if (!["codex", "claude"].includes(client))
+      throw new Error("Unknown AI client.");
+    const script = app.isPackaged
+      ? path.join(process.resourcesPath, "mcp", "pebble-mcp.cjs")
+      : path.join(__dirname, "../mcp/entry.cjs");
+    const config = configurations(script, app.getPath("userData"));
+    clipboard.writeText(config[client]);
+    return true;
+  });
   ipcMain.handle("data:export", async () => {
     const result = await dialog.showSaveDialog(win, {
       title: t("Export Pebble backup"),
@@ -171,7 +197,7 @@ function registerIPC() {
       filters: [{ name: "JSON", extensions: ["json"] }],
     });
     if (result.canceled) return false;
-    await stateQueue;
+    await taskService.queue;
     await store.queue;
     await fs.writeFile(result.filePath, JSON.stringify(state, null, 2), "utf8");
     return true;
@@ -200,7 +226,7 @@ function registerIPC() {
       cancelId: 0,
     });
     if (confirm.response !== 1) return null;
-    const saved = await saveState(imported);
+    const saved = await saveState(imported, true);
     pinned = saved.settings.pinned;
     // Return the new data before any pin event can reach the renderer's old state.
     return saved;
@@ -253,6 +279,17 @@ function registerIPC() {
 async function createWindow() {
   store = new Store(app.getPath("userData"));
   state = await store.load();
+  taskService = new TaskService(store, state, (saved, source) => {
+    state = saved;
+    if (source === "ai" && win && !win.isDestroyed())
+      win.webContents.send("data:changed", saved);
+  });
+  state = taskService.state;
+  if (process.argv.includes("--enable-ai"))
+    await updateState((current) => ({
+      ...current,
+      settings: { ...current.settings, aiEnabled: true },
+    }));
   pinned = state.settings.pinned;
   const area = screen.getPrimaryDisplay().workArea;
   anchor = constrain(
@@ -286,6 +323,7 @@ async function createWindow() {
   win.webContents.on("will-navigate", (event) => event.preventDefault());
   registerIPC();
   await win.loadFile(path.join(__dirname, "../src/index.html"));
+  await syncBridge();
   win.showInactive();
   win.setAlwaysOnTop(true, "floating");
   if (pinned || testMode || process.argv.includes("--open")) open();
@@ -348,7 +386,11 @@ app.on("before-quit", (event) => {
     clearInterval(dragTimer);
     clearTimeout(collapseTimer);
     globalShortcut.unregisterAll();
-    stateQueue.then(() => store.queue).finally(() => app.quit());
+    bridgeQueue
+      .then(() => aiBridge?.close())
+      .then(() => taskService.queue)
+      .then(() => store.queue)
+      .finally(() => app.quit());
   }
 });
 app.on("window-all-closed", () => app.quit());

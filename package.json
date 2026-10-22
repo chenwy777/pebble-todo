@@ -1,13 +1,19 @@
 {
   "name": "pebble-todo",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "A quiet floating to-do companion for Windows and macOS.",
   "author": "Pebble contributors",
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {
     "start": "electron .",
-    "test": "node --test tests/domain.test.cjs tests/store.test.cjs tests/layout.test.cjs",
+    "test": "node --test tests/domain.test.cjs tests/store.test.cjs tests/layout.test.cjs tests/ai.test.cjs",
+    "build:mcp": "node mcp/build.cjs",
+    "test:mcp": "node tests/mcp.cjs",
+    "prepack": "npm run build:mcp",
+    "predist": "npm run build:mcp",
+    "predist:win": "npm run build:mcp",
+    "predist:mac": "npm run build:mcp",
     "test:desktop": "node tests/desktop.cjs",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
@@ -15,9 +21,13 @@
     "dist:mac": "electron-builder --mac dmg zip"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "2.3.1",
+    "@modelcontextprotocol/server": "2.3.1",
     "electron": "45.0.0",
     "electron-builder": "26.15.3",
-    "playwright": "1.64.1"
+    "esbuild": "0.25.12",
+    "playwright": "1.64.1",
+    "zod": "4.3.6"
   },
   "build": {
     "appId": "app.pebble.todo",
@@ -31,6 +41,12 @@
       "src/**/*",
       "assets/**/*",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "mcp/dist",
+        "to": "mcp"
+      }
     ],
     "win": {
       "target": [

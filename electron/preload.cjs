@@ -10,10 +10,16 @@ contextBridge.exposeInMainWorld("desktop", {
   pin: (value) => ipcRenderer.send("window:pin", value),
   drag: (phase) => ipcRenderer.send("window:drag", phase),
   menu: () => ipcRenderer.send("window:menu"),
+  copyAiConfig: (client) => ipcRenderer.invoke("ai:copy-config", client),
   quit: () => ipcRenderer.send("app:quit"),
   onWindow: (callback) => {
     const listener = (_, value) => callback(value);
     ipcRenderer.on("window:state", listener);
     return () => ipcRenderer.removeListener("window:state", listener);
+  },
+  onData: (callback) => {
+    const listener = (_, value) => callback(value);
+    ipcRenderer.on("data:changed", listener);
+    return () => ipcRenderer.removeListener("data:changed", listener);
   },
 });

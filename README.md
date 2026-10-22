@@ -6,7 +6,16 @@ Minimal floating tasks for Windows and macOS.
 
 ![Pebble MVP，截图中为演示事项](docs/preview.png)
 
-## v0.4.2
+## v0.5.0
+
+- 新增本地 MCP 服务，面向 Codex、Claude Code 和 Claude Desktop 的本地接入，提供添加事项、查询事项、读取分类和本机日期时区四个工具。
+- 设置 → AI 连接可开启 / 停止访问，并复制 Codex 或 Claude 配置；详情见 [AI 连接说明](docs/ai.md)。
+- AI 添加成功后列表与小球数字即时刷新。支持中英文、日期、跨午夜时间段、预计时长和重复请求去重。
+- GUI 与 AI 写入统一排队，检测旧快照并保留编辑草稿，避免并发覆盖。
+
+Windows 试用文件在 `release-v0.5/`，直接运行 `release-v0.5/win-unpacked/Pebble.exe`。
+
+### v0.4.2
 
 - 自建分类接入离线常用词对照，例如 `life` / 生活、`work` / 工作、`travel` / 旅行；按界面语言显示，不改写原分类名或事项内容。
 - “管理分类”中每个分类可展开填写可选的英文和中文名称，优先使用用户填写的名称；清空后恢复常用词或原名。未收录的名称保留原文。
@@ -65,7 +74,7 @@ Windows 试用文件在 `release-v0.3/`，直接运行 `release-v0.3/win-unpacke
 - 本地持久保存、上一次写入的自动备份、JSON 导入导出、最近一次修改可撤销。
 - 托盘 / 菜单栏入口，以及 `Ctrl + Shift + Space`（Windows）/ `⌘ + Shift + Space`（macOS）快速唤出。
 
-不包含：AI 应用接入、云端同步、提醒通知、自动重复事项、实际用时计时器、开机启动。设置的时长是计划信息，不会自动把事项标记完成。
+不包含：云端同步、提醒通知、自动重复事项、实际用时计时器、开机启动。设置的时长是计划信息，不会自动把事项标记完成。
 
 ## 启动开发版
 
@@ -99,13 +108,15 @@ Windows 可以双击 `Start Pebble.cmd`。依赖首次安装需要联网；完�
 - 自动备份：同目录 `tasks.json.backup`，保存上一次写入的有效数据。
 - 检测到主文件损坏且有有效备份时，从备份恢复并保留损坏原文件；没有有效备份时会明确报错，不覆盖原文件。
 - 导入会替换当前数据，操作前会要求确认。重要数据请定期使用“导出备份”另存。
-- 应用不发送遥测、不请求外部资源、不启动网络接口。数据没有加密，使用电脑账户本身的访问权限保护。
+- 应用不发送遥测、不请求外部资源。只有开启 AI 连接后，才会启动经过令牌鉴权的本机回环接口。数据没有加密，使用电脑账户本身的访问权限保护。
 
 ## 测试与打包
 
 ```sh
 npm test               # 时间计算、数据校验、持久化与备份恢复
 npm run test:desktop   # 实际 Electron 窗口的交互回归测试
+npm run build:mcp      # 构建供 AI 客户端调用的独立本地桥接文件
+npm run test:mcp       # 隔离数据目录中的 MCP 与界面联动测试
 npm run pack           # 当前系统的可运行目录
 npm run dist:win       # 在 Windows 上生成安装程序与 zip
 npm run dist:mac       # 在 macOS 上生成 dmg 与 zip
@@ -117,11 +128,11 @@ npm run dist:mac       # 在 macOS 上生成 dmg 与 zip
 
 **平台验证范围**：Windows 可在本机进行运行验证。macOS 已配置同一套实现与打包流程，但需要在 Mac 上构建并验收透明窗口、屏幕缩放、多显示器、菜单栏与快捷键；配置文件本身不代表已验证通过。
 
-## 后续 AI 接入
+## AI 接入
 
-任务数据结构与校验集中在 `src/domain.js`，磁盘存储在 `electron/store.cjs`，桌面权限集中在主进程。后续让 AI 的结构化操作调用同一套任务服务，再推送变更给面板。
+任务数据结构与校验集中在 `src/domain.js`，磁盘存储在 `electron/store.cjs`，GUI 与 AI 共用 `electron/task-service.cjs`。本地桥接在 `electron/ai-bridge.cjs`，MCP stdio 入口在 `mcp/entry.cjs`。
 
-建议接入操作为 `addTask`、`updateTask`、`listTasks`；沿用 `title`、`status`、`categoryId`、`date`、`time` 字段。自然语言解析由 AI 应用承担。正式连接前需要确认具体 AI 应用、连接协议、授权和撤销方式。MVP 不对外开放未鉴权端口，也没有假装已连通的 AI 按钮。
+自然语言解析由 AI 应用承担。首版提供读取与新增，暂不通过 MCP 修改或删除已有事项。复制配置、客户端说明和验证范围见 [AI 连接说明](docs/ai.md)。
 
 ## 项目结构
 
@@ -130,6 +141,7 @@ electron/      原生窗口、托盘、受限的桌面桥接、本地存储
 src/           页面、样式、交互与共享数据校验
 assets/        应用图标与托盘图标
 tests/         数据测试与真实桌面交互测试
+mcp/           MCP stdio 服务、独立打包与客户端配置生成
 .github/       双平台打包工作流
 ```
 

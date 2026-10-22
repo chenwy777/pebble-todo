@@ -323,6 +323,16 @@
             Manage categories
           </button>
         </div>
+        <div class="setting-row">
+          <span data-t="AI connections">AI connections</span
+          ><button
+            id="settings-ai"
+            class="text-button"
+            data-t="Connect an AI app"
+          >
+            Connect an AI app
+          </button>
+        </div>
         <div class="section-label" data-t="Backup">Backup</div>
         <div class="backup-actions">
           <button id="export-data" data-t="Export backup">Export backup</button
@@ -336,7 +346,54 @@
         >
           Drag the orb to move. Right-click it to quit.
         </p>
-        <div class="about">Pebble <small>0.4.2</small></div>
+        <div class="about">Pebble <small>0.5.0</small></div>
+      </div>
+    </dialog>
+    <dialog id="ai-dialog">
+      <div class="dialog-form">
+        <div class="dialog-heading">
+          <h2 data-t="AI connections">AI connections</h2>
+          <button
+            class="icon-button dialog-close"
+            data-title="Close"
+            data-icon="close"
+          ></button>
+        </div>
+        <label class="ai-access"
+          ><input id="ai-enabled" type="checkbox" /><span
+            data-t="Allow AI apps to read and add tasks"
+            >Allow AI apps to read and add tasks</span
+          ></label
+        >
+        <p
+          class="dialog-description"
+          data-t="Connect Codex or Claude using the configuration below. Keep Pebble running while using AI."
+        >
+          Connect Codex or Claude using the configuration below. Keep Pebble
+          running while using AI.
+        </p>
+        <div class="backup-actions">
+          <button id="copy-codex" data-t="Copy Codex config">
+            Copy Codex config</button
+          ><button id="copy-claude" data-t="Copy Claude config">
+            Copy Claude config
+          </button>
+        </div>
+        <p
+          class="dialog-description"
+          data-t="Local connections use Node.js 20 or later. Paste Codex config into config.toml; merge Claude config into its MCP settings. Restart the AI client after setup."
+        >
+          Local connections use Node.js 20 or later. Paste Codex config into
+          config.toml; merge Claude config into its MCP settings. Restart the AI
+          client after setup.
+        </p>
+        <p
+          class="dialog-description"
+          data-t="AI can read tasks and categories, and add tasks with dates or planned times. Reminders and cloud sync are not included."
+        >
+          AI can read tasks and categories, and add tasks with dates or planned
+          times. Reminders and cloud sync are not included.
+        </p>
       </div>
     </dialog>
     <dialog id="category-dialog">

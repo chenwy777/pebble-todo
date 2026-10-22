@@ -833,6 +833,21 @@ input[type="color"] {
 .category-entry {
   margin-bottom: 15px;
 }
+.dialog-form .ai-access {
+  flex-direction: row;
+  align-items: center;
+  line-height: 1.6;
+  color: #34343a;
+}
+.dialog-form .ai-access input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  min-height: 14px;
+  flex: 0 0 14px;
+  margin: 0;
+  padding: 0;
+  accent-color: #555d69;
+}
 .category-translations {
   margin-left: 35px;
   color: #808087;

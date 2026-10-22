@@ -1,5 +1,11 @@
 # v0.2 visual direction
 
+## v0.5 local AI connections
+
+AI connection controls live in a settings dialog, keeping the floating note unchanged. One checkbox enables local access, with separate buttons to copy Codex TOML or Claude JSON configuration. The MCP server exposes four narrow tools: context, categories, task search and task creation. Natural language understanding stays with the chosen AI client.
+
+The desktop app remains the sole writer. GUI snapshots and AI commands share a serialized service, with revision checks rejecting outdated GUI saves. AI events update the note without overwriting open task-editor fields, and discard old undo snapshots. Request IDs survive restart for deduplication. The local bridge is disabled by default, loopback-only when enabled, token-protected, and shut down on disable or exit.
+
 ## v0.4.2 custom category localization
 
 All category headings, tags and selectors use the same label resolver: an explicit translation takes priority over a built-in label, then an exact match in the local common-category dictionary, then the original name. Only category labels use this dictionary; task text and custom template titles stay as entered. Category IDs and original names remain unchanged, including legacy custom `life` labels.

@@ -100,11 +100,21 @@ async function commit(next, message, undoable = false) {
   busy = true;
   document.body.classList.add("save-busy");
   try {
-    state = await window.desktop.save(next);
+    const saved = await window.desktop.save(next);
+    if (saved.revision >= state.revision) state = saved;
     render();
-    if (message) toast(t(message), undoable ? before : null);
+    if (message)
+      toast(
+        t(message),
+        undoable && state.revision === saved.revision ? before : null,
+      );
     return true;
   } catch (error) {
+    if (String(error.message).includes("The list changed.")) {
+      const loaded = await window.desktop.load();
+      state = loaded.state;
+      render();
+    }
     toast(`${t("Save failed")}: ${errorText(error)}`);
     return false;
   } finally {
@@ -451,6 +461,16 @@ function applyWindowState(value) {
 async function initialize() {
   const loaded = await window.desktop.load();
   state = loaded.state;
+  window.desktop.onData((saved) => {
+    if (saved.revision <= state.revision) return;
+    state = saved;
+    render();
+    lastUndo = null;
+    $("undo").hidden = true;
+    if (!busy) toast(t("Tasks updated by AI"));
+  });
+  const latest = await window.desktop.load();
+  if (latest.state.revision > state.revision) state = latest.state;
   render();
   if (loaded.notice) toast(I.error(language(), loaded.notice));
   window.desktop.onWindow((value) => {
@@ -489,6 +509,25 @@ async function initialize() {
   };
   $("manage-categories").onclick = () => openCategories();
   $("settings-categories").onclick = () => openCategories();
+  $("settings-ai").onclick = () => {
+    $("ai-enabled").checked = state.settings.aiEnabled;
+    $("ai-dialog").showModal();
+  };
+  $("ai-enabled").onchange = async (event) => {
+    const next = clone(state);
+    next.settings.aiEnabled = event.target.checked;
+    if (!(await commit(next))) event.target.checked = state.settings.aiEnabled;
+  };
+  for (const client of ["codex", "claude"]) {
+    $("copy-" + client).onclick = async () => {
+      try {
+        await window.desktop.copyAiConfig(client);
+        toast(t("Configuration copied"));
+      } catch (error) {
+        toast(`${t("Copy failed")}: ${errorText(error)}`);
+      }
+    };
+  }
   ["quick-category", "task-category", "template-category"].forEach((id) => {
     $(id).onfocus = () => ($(id).dataset.previous = $(id).value);
     $(id).onchange = () => {
@@ -817,7 +856,10 @@ async function initialize() {
     }
   };
   $("undo").onclick = async () => {
-    if (lastUndo && (await commit(lastUndo, "Undone"))) {
+    if (
+      lastUndo &&
+      (await commit({ ...lastUndo, revision: state.revision }, "Undone"))
+    ) {
       if ($("category-dialog").open) renderCategories();
       window.desktop.pin(state.settings.pinned);
     }

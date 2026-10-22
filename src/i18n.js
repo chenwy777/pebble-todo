@@ -10,6 +10,23 @@
     Templates: "快捷模板",
     "Pin open": "固定展开",
     Settings: "设置",
+    "AI connections": "AI 连接",
+    "Connect an AI app": "连接 AI 软件",
+    "Allow AI apps to read and add tasks": "允许 AI 软件读取和添加事项",
+    "Connect Codex or Claude using the configuration below. Keep Pebble running while using AI.":
+      "使用下面的配置连接 Codex 或 Claude。使用 AI 时请保持 Pebble 运行。",
+    "Copy Codex config": "复制 Codex 配置",
+    "Copy Claude config": "复制 Claude 配置",
+    "Local connections use Node.js 20 or later. Paste Codex config into config.toml; merge Claude config into its MCP settings. Restart the AI client after setup.":
+      "本地连接需要 Node.js 20 或更新版本。将 Codex 配置加入 config.toml，或将 Claude 配置合并到其 MCP 设置中。配置后重启 AI 软件。",
+    "AI can read tasks and categories, and add tasks with dates or planned times. Reminders and cloud sync are not included.":
+      "AI 可以读取事项和分类，并添加带日期、预计时长或时间段的事项。暂不支持提醒和云端同步。",
+    "Configuration copied": "配置已复制",
+    "Copy failed": "复制失败",
+    "Tasks updated by AI": "AI 已更新事项",
+    "The list changed. Review the latest tasks and try again.":
+      "列表已更新，请检查最新事项后重试。",
+    "Invalid data revision.": "数据版本无效。",
     Collapse: "收起",
     Open: "展开",
     "Quit Pebble": "退出 Pebble",
