@@ -7,6 +7,9 @@
 - 增加可复现的录像、编码及校验值生成脚本，README 内嵌三段 GIF。
 - 单元测试 24 项通过。构建工作流拆为 Windows x64、macOS arm64、macOS x64 三个任务，统一发行文件名，并在标签构建后发布预览版和 SHA-256 校验值。
 - 安装包构建结果与真实 Mac / Claude 客户端人工体验验收继续分开记录。
+- [首次公开发行工作流](https://github.com/chenwy777/pebble-todo/actions/runs/39719690073) 的 Windows x64、macOS arm64、macOS x64 构建与各平台单元测试均通过，发行任务也已成功。
+- [v0.5.0 预览版](https://github.com/chenwy777/pebble-todo/releases/tag/v0.5.0) 已发布六个安装 / 压缩包及 `SHA256SUMS.txt`。检查了匿名下载、文件大小、README 文件名对应关系以及校验值与 GitHub 资产 digest 一致。
+- 已检查公开 GitHub 首页渲染的三段 GIF，均可匿名读取并以 `image/gif` 提供。
 
 ## v0.5.0 本地 MCP 连接
 
